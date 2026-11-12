@@ -2,6 +2,8 @@ package cdev.wargame.core
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.annotation.StringRes
+import cdev.wargame.R
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -62,7 +64,7 @@ class CampaignManager(context: Context) {
         set(value) = prefs.edit().putInt("last_gems_reward", value).apply()
 
     var language: String
-        get() = prefs.getString("language", "EN") ?: "EN"
+        get() = prefs.getString("language", Locale.getDefault().language.let { if (it == "sk") "sk" else "en" }) ?: "en"
         set(value) = prefs.edit().putString("language", value).apply()
 
     // Tech upgrades (levels 1..10)
@@ -130,14 +132,15 @@ class CampaignManager(context: Context) {
         return NumberFormat.getNumberInstance(Locale.US).format(value)
     }
 
-    fun getRankName(): String {
+    @StringRes
+    fun getRankResId(): Int {
         return when {
-            playerLevel < 3 -> "CADET"
-            playerLevel < 6 -> "LIEUTENANT"
-            playerLevel < 15 -> "COMMANDER"
-            playerLevel < 25 -> "COLONEL"
-            playerLevel < 40 -> "GENERAL"
-            else -> "FLEET ADMIRAL"
+            playerLevel < 3 -> R.string.rank_cadet
+            playerLevel < 6 -> R.string.rank_lieutenant
+            playerLevel < 15 -> R.string.rank_commander
+            playerLevel < 25 -> R.string.rank_colonel
+            playerLevel < 40 -> R.string.rank_general
+            else -> R.string.rank_fleet_admiral
         }
     }
 

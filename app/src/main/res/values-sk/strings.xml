@@ -1,0 +1,88 @@
+<resources>
+    <string name="app_name">WarGame</string>
+
+    <!-- Main Menu Header -->
+    <string name="logo_title">WARGAME.IO</string>
+    <string name="logo_subtitle">TAKTICKÁ DOBÝVACIA STRATÉGIA V REÁLNOM ČASE</string>
+    <string name="rank_badge_format">%1$s • ÚROVEŇ %2$d</string>
+
+    <!-- Ranks -->
+    <string name="rank_cadet">KADET</string>
+    <string name="rank_lieutenant">PORUČÍK</string>
+    <string name="rank_commander">VELITEĽ</string>
+    <string name="rank_colonel">PLUKOVNÍK</string>
+    <string name="rank_general">GENERÁL</string>
+    <string name="rank_fleet_admiral">ADMIRÁL FLOTILY</string>
+
+    <!-- Top HUD -->
+    <string name="currency_credits_format">%1$s</string>
+    <string name="currency_gems_format">%1$s</string>
+
+    <!-- Player Stat Card -->
+    <string name="player_level_label">ÚROVEŇ HRÁČA</string>
+    <string name="player_level_value">LVL %1$d</string>
+    <string name="sectors_conquered_format">%1$d DOBYTÝCH SEKTOROV</string>
+    <string name="win_rate_format">ÚSPEŠNOSŤ: %1$s</string>
+    <string name="streak_format">SÉRIA: %1$d VÍŤAZSTIEV</string>
+
+    <!-- Last Sector Pill & Launch Button -->
+    <string name="last_sector_format">POSL. SEKTOR %1$d</string>
+    <string name="last_sector_rewards_format">%1$s PTS   +%2$d KR   +%3$d DM</string>
+    <string name="launch_mission">SPUSTIŤ MISIU</string>
+    <string name="tactical_hint_1">POTIAHNI ZO ZÁKLADNE PRE ÚTOK // ROJOVÁ OFENZÍVA</string>
+    <string name="tactical_hint_2">SPOJ VIACERO ZÁKLADNÍ JEDNÝM ŤAHOM</string>
+
+    <!-- Bottom Navigation Tabs -->
+    <string name="tab_mission">MISIA</string>
+    <string name="tab_tech">TECH</string>
+    <string name="tab_armory">PROFIL</string>
+
+    <!-- Tech Tab -->
+    <string name="tech_title">TECHNOLÓGIE ROJA</string>
+    <string name="tech_subtitle">VYLEPŠI PARAMETRE JEDNOTIEK A ZÁKLADNÍ</string>
+    <string name="tech_speed">RÝCHLOSŤ LETU</string>
+    <string name="tech_regen">REGENERÁCIA UZLA</string>
+    <string name="tech_shield">ŠTÍT ZÁKLADNE</string>
+    <string name="tech_capacity">MAX. KAPACITA</string>
+    <string name="tech_level_format">LVL %1$d / 10</string>
+    <string name="tech_max">MAX</string>
+    <string name="tech_cost_format">%1$d</string>
+
+    <!-- Armory Tab -->
+    <string name="armory_title">ZBROJNICA &amp; PROFIL</string>
+    <string name="armory_subtitle">VÝBER VIZUÁLNEJ SCHÉMY FLOTILY</string>
+    <string name="skin_cyan">CYBER CYAN (PREDVOLENÁ)</string>
+    <string name="skin_gold">SOLÁRNA ZLATÁ (#FFC629)</string>
+    <string name="skin_emerald">SMARAGDOVÁ MATRIX (#10B981)</string>
+    <string name="skin_violet">PLAZMOVÁ FIALOVÁ (#A855F7)</string>
+    <string name="skin_equipped">AKTÍVNE</string>
+    <string name="skin_select">VYBRAŤ</string>
+
+    <!-- Sector / Level Select -->
+    <string name="sectors_title">VÝBER SEKTORA</string>
+    <string name="sector_1_title">Sektor 1: Prvý stret</string>
+    <string name="sector_2_title">Sektor 2: Triangulácia</string>
+    <string name="sector_3_title">Sektor 3: Pásmo asteroidov</string>
+    <string name="sector_4_title">Sektor 4: Štvorité obliehanie</string>
+    <string name="sector_5_title">Sektor 5: Totálna nadvláda</string>
+    <string name="sector_deploy">SPUSTIŤ</string>
+    <string name="sector_locked">ZAMKNUTÉ</string>
+    <string name="back_to_menu">SPÄŤ DO MENU</string>
+
+    <!-- Settings Modal -->
+    <string name="settings_title">NASTAVENIA</string>
+    <string name="settings_language">JAZYK: SK</string>
+    <string name="settings_sound_active">ZVUKY (SFX): ZAPNUTÉ</string>
+    <string name="settings_sound_muted">ZVUKY (SFX): VYPNUTÉ</string>
+    <string name="settings_reset_progress">RESETOVAŤ PROGRES</string>
+    <string name="settings_close">ZAVRIEŤ</string>
+
+    <!-- Victory / Defeat Modal -->
+    <string name="victory_title">VÍŤAZSTVO!</string>
+    <string name="defeat_title">PREHRA</string>
+    <string name="victory_subtitle_format">Sektor obsadený! +%1$d KR  +%2$d DM</string>
+    <string name="defeat_subtitle">Všetky veliteľské základne boli stratené.</string>
+    <string name="next_mission">ĎALŠIA MISIA</string>
+    <string name="retry_mission">SKÚSIŤ ZNOVA</string>
+    <string name="main_menu_btn">HLAVNÉ MENU</string>
+</resources>

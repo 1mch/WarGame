@@ -1,3 +1,88 @@
 <resources>
     <string name="app_name">WarGame</string>
+
+    <!-- Main Menu Header -->
+    <string name="logo_title">WARGAME.IO</string>
+    <string name="logo_subtitle">REAL-TIME TACTICAL SWARM CONQUEST</string>
+    <string name="rank_badge_format">%1$s • LVL %2$d</string>
+
+    <!-- Ranks -->
+    <string name="rank_cadet">CADET</string>
+    <string name="rank_lieutenant">LIEUTENANT</string>
+    <string name="rank_commander">COMMANDER</string>
+    <string name="rank_colonel">COLONEL</string>
+    <string name="rank_general">GENERAL</string>
+    <string name="rank_fleet_admiral">FLEET ADMIRAL</string>
+
+    <!-- Top HUD -->
+    <string name="currency_credits_format">%1$s</string>
+    <string name="currency_gems_format">%1$s</string>
+
+    <!-- Player Stat Card -->
+    <string name="player_level_label">PLAYER LEVEL</string>
+    <string name="player_level_value">LVL %1$d</string>
+    <string name="sectors_conquered_format">%1$d SECTORS CONQUERED</string>
+    <string name="win_rate_format">WIN RATE: %1$s</string>
+    <string name="streak_format">STREAK: %1$d WINS</string>
+
+    <!-- Last Sector Pill & Launch Button -->
+    <string name="last_sector_format">LAST SECTOR %1$d</string>
+    <string name="last_sector_rewards_format">%1$s PTS   +%2$d CR   +%3$d GM</string>
+    <string name="launch_mission">LAUNCH MISSION</string>
+    <string name="tactical_hint_1">DRAG FROM BASE TO ATTACK // SWARM CONQUEST</string>
+    <string name="tactical_hint_2">CONNECT MULTIPLE NODES TO SWARM</string>
+
+    <!-- Bottom Navigation Tabs -->
+    <string name="tab_mission">MISSION</string>
+    <string name="tab_tech">TECH</string>
+    <string name="tab_armory">ARMORY</string>
+
+    <!-- Tech Tab -->
+    <string name="tech_title">SWARM TECH LAB</string>
+    <string name="tech_subtitle">UPGRADE UNIT &amp; NODE COMBAT PARAMETERS</string>
+    <string name="tech_speed">THRUSTER SPEED</string>
+    <string name="tech_regen">NODE REGEN RATE</string>
+    <string name="tech_shield">BASE SHIELDING</string>
+    <string name="tech_capacity">SWARM CAPACITY</string>
+    <string name="tech_level_format">LVL %1$d / 10</string>
+    <string name="tech_max">MAX</string>
+    <string name="tech_cost_format">%1$d</string>
+
+    <!-- Armory Tab -->
+    <string name="armory_title">ARMORY &amp; PILOT PROFILE</string>
+    <string name="armory_subtitle">SELECT FLEET VISUAL CHROMA SKIN</string>
+    <string name="skin_cyan">CYBER CYAN (DEFAULT)</string>
+    <string name="skin_gold">SOLAR GOLD (#FFC629)</string>
+    <string name="skin_emerald">EMERALD MATRIX (#10B981)</string>
+    <string name="skin_violet">PLASMA VIOLET (#A855F7)</string>
+    <string name="skin_equipped">EQUIPPED</string>
+    <string name="skin_select">SELECT</string>
+
+    <!-- Sector / Level Select -->
+    <string name="sectors_title">CAMPAIGN SECTORS</string>
+    <string name="sector_1_title">Sector 1: First Clash</string>
+    <string name="sector_2_title">Sector 2: Triangulation</string>
+    <string name="sector_3_title">Sector 3: Asteroid Chokepoints</string>
+    <string name="sector_4_title">Sector 4: Quad Siege</string>
+    <string name="sector_5_title">Sector 5: Total Dominion</string>
+    <string name="sector_deploy">DEPLOY</string>
+    <string name="sector_locked">LOCKED</string>
+    <string name="back_to_menu">BACK TO MENU</string>
+
+    <!-- Settings Modal -->
+    <string name="settings_title">SETTINGS</string>
+    <string name="settings_language">LANGUAGE: EN</string>
+    <string name="settings_sound_active">SOUND SFX: ACTIVE</string>
+    <string name="settings_sound_muted">SOUND SFX: MUTED</string>
+    <string name="settings_reset_progress">RESET PROGRESS</string>
+    <string name="settings_close">CLOSE</string>
+
+    <!-- Victory / Defeat Modal -->
+    <string name="victory_title">VICTORY!</string>
+    <string name="defeat_title">DEFEAT</string>
+    <string name="victory_subtitle_format">Sector secured! +%1$d CR  +%2$d GM</string>
+    <string name="defeat_subtitle">All command nodes were lost.</string>
+    <string name="next_mission">NEXT MISSION</string>
+    <string name="retry_mission">RETRY MISSION</string>
+    <string name="main_menu_btn">MAIN MENU</string>
 </resources>

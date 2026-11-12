@@ -4,9 +4,12 @@ import android.animation.ObjectAnimator
 import android.animation.PropertyValuesHolder
 import android.animation.ValueAnimator
 import android.content.Context
+import android.content.res.Configuration
+import android.content.res.Resources
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.PorterDuff
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.text.SpannableString
@@ -19,11 +22,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import androidx.annotation.DrawableRes
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import cdev.wargame.R
 import cdev.wargame.core.CampaignManager
 import cdev.wargame.core.GameConfig
 import cdev.wargame.core.GameEngine
@@ -63,7 +69,8 @@ class MainUiController(
     private lateinit var statCardStreakText: TextView
     private lateinit var lastSectorLeftText: TextView
     private lateinit var lastSectorRightText: TextView
-    private lateinit var launchMissionBtn: TextView
+    private lateinit var launchMissionBtn: LinearLayout
+    private lateinit var launchMissionBtnText: TextView
     private lateinit var instructionText1: TextView
     private lateinit var instructionText2: TextView
 
@@ -75,33 +82,42 @@ class MainUiController(
 
     // Bottom Navigation Tab views
     private val bottomTabIndicators = arrayOfNulls<View>(3)
-    private val bottomTabIcons = arrayOfNulls<TextView>(3)
+    private val bottomTabIcons = arrayOfNulls<ImageView>(3)
     private val bottomTabLabels = arrayOfNulls<TextView>(3)
     private val bottomTabContainers = arrayOfNulls<LinearLayout>(3)
 
     // Settings Modal overlay
     private lateinit var settingsModalOverlay: FrameLayout
     private lateinit var settingsTitleText: TextView
-    private lateinit var settingsLangBtn: TextView
-    private lateinit var settingsSoundBtn: TextView
-    private lateinit var settingsResetBtn: TextView
+    private lateinit var settingsLangBtnText: TextView
+    private lateinit var settingsSoundBtnIcon: ImageView
+    private lateinit var settingsSoundBtnText: TextView
+    private lateinit var settingsResetBtnText: TextView
     private lateinit var settingsCloseBtn: TextView
 
     // In-Game HUD views
     private lateinit var hudLevelTitleText: TextView
     private lateinit var hudPowerBarView: PowerBarView
-    private lateinit var hudPauseBtn: TextView
+    private lateinit var hudPauseIcon: ImageView
     private lateinit var gameOverModalOverlay: FrameLayout
     private lateinit var gameOverCard: LinearLayout
     private lateinit var gameOverTitleText: TextView
     private lateinit var gameOverSubText: TextView
-    private lateinit var gameOverPrimaryBtn: TextView
-    private lateinit var gameOverHomeBtn: TextView
+    private lateinit var gameOverPrimaryBtn: LinearLayout
+    private lateinit var gameOverPrimaryIcon: ImageView
+    private lateinit var gameOverPrimaryText: TextView
+    private lateinit var gameOverHomeText: TextView
 
     init {
         buildHierarchy()
         refreshAllUi()
         startHudSyncTicker()
+    }
+
+    private fun localizedResources(): Resources {
+        val config = Configuration(context.resources.configuration)
+        config.setLocale(Locale.forLanguageTag(campaignManager.language.lowercase(Locale.ROOT)))
+        return context.createConfigurationContext(config).resources
     }
 
     private fun dp(value: Float): Int {
@@ -120,7 +136,21 @@ class MainUiController(
         )
     }
 
-    private fun roundedBg(fillColor: Int, strokeColor: Int = Color.TRANSPARENT, strokeWidthDp: Float = 0f, radiusDp: Float = 10f): GradientDrawable {
+    private fun createLucideIcon(@DrawableRes resId: Int, sizeDp: Float, tintColor: Int): ImageView {
+        return ImageView(context).apply {
+            setImageResource(resId)
+            setColorFilter(tintColor, PorterDuff.Mode.SRC_IN)
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            layoutParams = LinearLayout.LayoutParams(dp(sizeDp), dp(sizeDp))
+        }
+    }
+
+    private fun roundedBg(
+        fillColor: Int,
+        strokeColor: Int = Color.TRANSPARENT,
+        strokeWidthDp: Float = 0f,
+        radiusDp: Float = 10f
+    ): GradientDrawable {
         return GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
             cornerRadius = dpF(radiusDp)
@@ -176,7 +206,7 @@ class MainUiController(
             insets
         }
 
-        // Currency Pill (Left)
+        // Currency Pill (Left) with Monochrome Lucide Icons (ic_coins & ic_gem)
         val currencyPill = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -184,6 +214,9 @@ class MainUiController(
             setPadding(dp(14f), dp(6f), dp(14f), dp(6f))
         }
 
+        val coinsIcon = createLucideIcon(R.drawable.ic_coins, 14f, Color.parseColor("#FFC629")).apply {
+            (layoutParams as LinearLayout.LayoutParams).marginEnd = dp(6f)
+        }
         creditsText = TextView(context).apply {
             setTextColor(Color.parseColor("#FFC629"))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
@@ -192,12 +225,16 @@ class MainUiController(
         val pillDivider = View(context).apply {
             setBackgroundColor(Color.parseColor("#333333"))
         }
+        val gemIcon = createLucideIcon(R.drawable.ic_gem, 14f, Color.parseColor("#4DF1FF")).apply {
+            (layoutParams as LinearLayout.LayoutParams).marginEnd = dp(6f)
+        }
         gemsText = TextView(context).apply {
             setTextColor(Color.parseColor("#4DF1FF"))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
             typeface = Typeface.DEFAULT_BOLD
         }
 
+        currencyPill.addView(coinsIcon)
         currencyPill.addView(creditsText)
         currencyPill.addView(
             pillDivider,
@@ -206,6 +243,7 @@ class MainUiController(
                 marginEnd = dp(10f)
             }
         )
+        currencyPill.addView(gemIcon)
         currencyPill.addView(gemsText)
 
         topHudBar.addView(
@@ -213,17 +251,20 @@ class MainUiController(
             FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(34f), Gravity.START or Gravity.CENTER_VERTICAL)
         )
 
-        // Settings Circular Button (Right)
-        val settingsBtn = TextView(context).apply {
-            text = "⚙"
-            gravity = Gravity.CENTER
-            setTextColor(Color.parseColor("#CCCCCC"))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+        // Settings Circular Button (Right) with Lucide ic_settings
+        val settingsBtn = FrameLayout(context).apply {
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
                 setColor(Color.parseColor("#0A0A0A"))
                 setStroke(dp(1f), Color.parseColor("#222222"))
             }
+            addView(
+                ImageView(context).apply {
+                    setImageResource(R.drawable.ic_settings)
+                    setColorFilter(Color.parseColor("#CCCCCC"), PorterDuff.Mode.SRC_IN)
+                },
+                FrameLayout.LayoutParams(dp(18f), dp(18f), Gravity.CENTER)
+            )
             setOnClickListener { v ->
                 v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                 engine.soundManager.playDragSelect()
@@ -344,9 +385,13 @@ class MainUiController(
 
         // 2. Game Logo: WARGAME (White #FFFFFF) + .IO (Cyan #00D2FF)
         val logoText = TextView(context).apply {
-            val span = SpannableString("WARGAME.IO")
-            span.setSpan(ForegroundColorSpan(Color.WHITE), 0, 7, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-            span.setSpan(ForegroundColorSpan(Color.parseColor("#00D2FF")), 7, 10, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            val rawLogo = context.getString(R.string.logo_title)
+            val span = SpannableString(rawLogo)
+            val dotIdx = rawLogo.indexOf('.')
+            if (dotIdx > 0) {
+                span.setSpan(ForegroundColorSpan(Color.WHITE), 0, dotIdx, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                span.setSpan(ForegroundColorSpan(Color.parseColor("#00D2FF")), dotIdx, rawLogo.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
             text = span
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 34f)
             typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
@@ -460,6 +505,9 @@ class MainUiController(
                 refreshAllUi()
             }
         }
+        val radarMiniIcon = createLucideIcon(R.drawable.ic_crosshair, 13f, Color.parseColor("#94A3B8")).apply {
+            (layoutParams as LinearLayout.LayoutParams).marginEnd = dp(6f)
+        }
         lastSectorLeftText = TextView(context).apply {
             setTextColor(Color.parseColor("#94A3B8"))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 10.5f)
@@ -471,6 +519,7 @@ class MainUiController(
             typeface = Typeface.DEFAULT_BOLD
             gravity = Gravity.END
         }
+        lastSectorPill.addView(radarMiniIcon)
         lastSectorPill.addView(lastSectorLeftText, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
         lastSectorPill.addView(lastSectorRightText, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
 
@@ -481,13 +530,10 @@ class MainUiController(
             }
         )
 
-        // 7. Main Button: "▶ LAUNCH MISSION" (52dp height, #FFC629 neon-gold, 2.8s Breathing Pulse)
-        launchMissionBtn = TextView(context).apply {
+        // 7. Main Button: "LAUNCH MISSION" with Lucide ic_play and 2.8s Breathing Pulse
+        launchMissionBtn = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
-            setTextColor(Color.parseColor("#0A0401"))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
-            typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
-            letterSpacing = 0.12f
             background = roundedBg(Color.parseColor("#FFC629"), radiusDp = 10f)
             elevation = dpF(8f)
             setOnClickListener { v ->
@@ -497,6 +543,17 @@ class MainUiController(
                 refreshAllUi()
             }
         }
+        val playIcon = createLucideIcon(R.drawable.ic_play, 16f, Color.parseColor("#0A0401")).apply {
+            (layoutParams as LinearLayout.LayoutParams).marginEnd = dp(10f)
+        }
+        launchMissionBtnText = TextView(context).apply {
+            setTextColor(Color.parseColor("#0A0401"))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+            typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
+            letterSpacing = 0.12f
+        }
+        launchMissionBtn.addView(playIcon)
+        launchMissionBtn.addView(launchMissionBtnText)
 
         // 2.8s Breathing Pulse Animation (scale 1.0 -> 1.025)
         ObjectAnimator.ofPropertyValuesHolder(
@@ -563,12 +620,11 @@ class MainUiController(
         }
     }
 
-    private fun populateTechTab() {
+    private fun populateTechTab(res: Resources) {
         techTabContainer.removeAllViews()
-        val isSk = campaignManager.language == "SK"
 
         val title = TextView(context).apply {
-            text = if (isSk) "TECHNOLÓGIE ROJA" else "SWARM TECH LAB"
+            text = res.getString(R.string.tech_title)
             setTextColor(Color.parseColor("#FFC629"))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f)
             typeface = Typeface.DEFAULT_BOLD
@@ -576,7 +632,7 @@ class MainUiController(
             gravity = Gravity.CENTER
         }
         val sub = TextView(context).apply {
-            text = if (isSk) "VYLEPŠI PARAMETRE JEDNOTIEK A ZÁKLADNÍ" else "UPGRADE UNIT & NODE COMBAT PARAMETERS"
+            text = res.getString(R.string.tech_subtitle)
             setTextColor(Color.parseColor("#888888"))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 9.5f)
             typeface = Typeface.DEFAULT_BOLD
@@ -589,11 +645,18 @@ class MainUiController(
             bottomMargin = dp(16f)
         })
 
-        val names = if (isSk) {
-            arrayOf("⚡ RÝCHLOSŤ LETU", "🔄 REGENERÁCIA UZLA", "🛡️ ŠTÍT ZÁKLADNE", "📦 MAX. KAPACITA")
-        } else {
-            arrayOf("⚡ THRUSTER SPEED", "🔄 NODE REGEN RATE", "🛡️ BASE SHIELDING", "📦 SWARM CAPACITY")
-        }
+        val iconResIds = intArrayOf(
+            R.drawable.ic_zap,
+            R.drawable.ic_rotate_ccw,
+            R.drawable.ic_shield,
+            R.drawable.ic_box
+        )
+        val nameResIds = intArrayOf(
+            R.string.tech_speed,
+            R.string.tech_regen,
+            R.string.tech_shield,
+            R.string.tech_capacity
+        )
         val levels = arrayOf(
             campaignManager.techSpeedLevel,
             campaignManager.techRegenLevel,
@@ -613,30 +676,31 @@ class MainUiController(
                 setPadding(dp(14f), dp(12f), dp(14f), dp(12f))
             }
 
+            val iconView = createLucideIcon(iconResIds[i], 20f, Color.parseColor("#4DF1FF")).apply {
+                (layoutParams as LinearLayout.LayoutParams).marginEnd = dp(12f)
+            }
+
             val leftCol = LinearLayout(context).apply {
                 orientation = LinearLayout.VERTICAL
             }
             leftCol.addView(TextView(context).apply {
-                text = names[i]
+                text = res.getString(nameResIds[i])
                 setTextColor(Color.WHITE)
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
                 typeface = Typeface.DEFAULT_BOLD
             })
             leftCol.addView(TextView(context).apply {
-                text = "LVL $lvl / 10"
+                text = res.getString(R.string.tech_level_format, lvl)
                 setTextColor(Color.parseColor("#4DF1FF"))
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 10f)
                 typeface = Typeface.DEFAULT_BOLD
             })
 
-            val upgBtn = TextView(context).apply {
-                text = if (lvl >= 10) "MAX" else "🪙 $cost"
+            val upgBtn = LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
-                typeface = Typeface.DEFAULT_BOLD
-                setTextColor(if (canAfford) Color.parseColor("#0A0401") else Color.parseColor("#666666"))
                 background = roundedBg(if (canAfford) Color.parseColor("#FFC629") else Color.parseColor("#1E1E1E"), radiusDp = 6f)
-                setPadding(dp(14f), dp(8f), dp(14f), dp(8f))
+                setPadding(dp(10f), dp(6f), dp(10f), dp(6f))
                 setOnClickListener { v ->
                     if (lvl < 10 && campaignManager.credits >= cost) {
                         campaignManager.credits -= cost
@@ -655,7 +719,20 @@ class MainUiController(
                     }
                 }
             }
+            val fgColor = if (canAfford) Color.parseColor("#0A0401") else Color.parseColor("#666666")
+            if (lvl < 10) {
+                upgBtn.addView(createLucideIcon(R.drawable.ic_coins, 12f, fgColor).apply {
+                    (layoutParams as LinearLayout.LayoutParams).marginEnd = dp(5f)
+                })
+            }
+            upgBtn.addView(TextView(context).apply {
+                text = if (lvl >= 10) res.getString(R.string.tech_max) else res.getString(R.string.tech_cost_format, cost)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
+                typeface = Typeface.DEFAULT_BOLD
+                setTextColor(fgColor)
+            })
 
+            card.addView(iconView)
             card.addView(leftCol, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
             card.addView(upgBtn, LinearLayout.LayoutParams(dp(92f), dp(36f)))
 
@@ -677,12 +754,11 @@ class MainUiController(
         }
     }
 
-    private fun populateArmoryTab() {
+    private fun populateArmoryTab(res: Resources) {
         armoryTabContainer.removeAllViews()
-        val isSk = campaignManager.language == "SK"
 
         val title = TextView(context).apply {
-            text = if (isSk) "ZBROJNICA & PROFIL" else "ARMORY & PILOT PROFILE"
+            text = res.getString(R.string.armory_title)
             setTextColor(Color.parseColor("#4DF1FF"))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f)
             typeface = Typeface.DEFAULT_BOLD
@@ -690,7 +766,7 @@ class MainUiController(
             gravity = Gravity.CENTER
         }
         val sub = TextView(context).apply {
-            text = if (isSk) "VÝBER VIZUÁLNEJ SCHÉMY FLOTILY" else "SELECT FLEET VISUAL CHROMA SKIN"
+            text = res.getString(R.string.armory_subtitle)
             setTextColor(Color.parseColor("#888888"))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 9.5f)
             typeface = Typeface.DEFAULT_BOLD
@@ -703,11 +779,11 @@ class MainUiController(
             bottomMargin = dp(16f)
         })
 
-        val skinNames = arrayOf(
-            "CYBER CYAN (DEFAULT)",
-            "SOLAR GOLD (#FFC629)",
-            "EMERALD MATRIX (#10B981)",
-            "PLASMA VIOLET (#A855F7)"
+        val skinNameResIds = intArrayOf(
+            R.string.skin_cyan,
+            R.string.skin_gold,
+            R.string.skin_emerald,
+            R.string.skin_violet
         )
         val skinColors = intArrayOf(
             Color.parseColor("#00D2FF"),
@@ -744,13 +820,13 @@ class MainUiController(
                 }
             }
             val nameTxt = TextView(context).apply {
-                text = skinNames[i]
+                text = res.getString(skinNameResIds[i])
                 setTextColor(Color.WHITE)
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 11.5f)
                 typeface = Typeface.DEFAULT_BOLD
             }
             val statusTxt = TextView(context).apply {
-                text = if (isSel) (if (isSk) "AKTÍVNE" else "EQUIPPED") else (if (isSk) "VYBRAŤ" else "SELECT")
+                text = res.getString(if (isSel) R.string.skin_equipped else R.string.skin_select)
                 setTextColor(if (isSel) Color.parseColor("#FFC629") else Color.parseColor("#666666"))
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 10.5f)
                 typeface = Typeface.DEFAULT_BOLD
@@ -778,13 +854,12 @@ class MainUiController(
         }
     }
 
-    private fun populateLevelSelect() {
+    private fun populateLevelSelect(res: Resources) {
         levelSelectContainer.removeAllViews()
-        val isSk = campaignManager.language == "SK"
         val unlocked = campaignManager.unlockedLevel
 
         val title = TextView(context).apply {
-            text = if (isSk) "VÝBER SEKTORA" else "CAMPAIGN SECTORS"
+            text = res.getString(R.string.sectors_title)
             setTextColor(Color.parseColor("#FFC629"))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f)
             typeface = Typeface.DEFAULT_BOLD
@@ -795,12 +870,12 @@ class MainUiController(
             bottomMargin = dp(16f)
         })
 
-        val levelTitles = listOf(
-            "Sector 1: First Clash",
-            "Sector 2: Triangulation",
-            "Sector 3: Asteroid Chokepoints",
-            "Sector 4: Quad Siege",
-            "Sector 5: Total Dominion"
+        val levelTitleResIds = intArrayOf(
+            R.string.sector_1_title,
+            R.string.sector_2_title,
+            R.string.sector_3_title,
+            R.string.sector_4_title,
+            R.string.sector_5_title
         )
 
         for (i in 0 until 5) {
@@ -836,20 +911,35 @@ class MainUiController(
             }
 
             val nameTxt = TextView(context).apply {
-                text = levelTitles[i]
+                text = res.getString(levelTitleResIds[i])
                 setTextColor(if (isUnlocked) Color.WHITE else Color.parseColor("#555555"))
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f)
                 typeface = Typeface.DEFAULT_BOLD
             }
+
+            val statusRow = LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+            }
+            val statusColor = if (isUnlocked) Color.parseColor("#4ADE80") else Color.parseColor("#666666")
             val statusTxt = TextView(context).apply {
-                text = if (isUnlocked) (if (isSk) "SPUSTIŤ ▶" else "DEPLOY ▶") else (if (isSk) "ZAMKNUTÉ 🔒" else "LOCKED 🔒")
-                setTextColor(if (isUnlocked) Color.parseColor("#4ADE80") else Color.parseColor("#666666"))
+                text = res.getString(if (isUnlocked) R.string.sector_deploy else R.string.sector_locked)
+                setTextColor(statusColor)
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
                 typeface = Typeface.DEFAULT_BOLD
             }
+            val statusIcon = createLucideIcon(
+                if (isUnlocked) R.drawable.ic_play else R.drawable.ic_lock,
+                12f,
+                statusColor
+            ).apply {
+                (layoutParams as LinearLayout.LayoutParams).marginStart = dp(6f)
+            }
+            statusRow.addView(statusTxt)
+            statusRow.addView(statusIcon)
 
             row.addView(nameTxt, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-            row.addView(statusTxt)
+            row.addView(statusRow)
 
             levelSelectContainer.addView(
                 row,
@@ -860,7 +950,7 @@ class MainUiController(
         }
 
         val backBtn = TextView(context).apply {
-            text = if (isSk) "◀ SPÄŤ DO MENU" else "◀ BACK TO MENU"
+            text = res.getString(R.string.back_to_menu)
             gravity = Gravity.CENTER
             setTextColor(Color.parseColor("#FFC629"))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
@@ -888,7 +978,12 @@ class MainUiController(
             setBackgroundColor(Color.parseColor("#0B0B0B"))
         }
 
-        val icons = arrayOf("◎", "⚡", "🛡️")
+        // Monochrome Lucide Icons for Bottom Tabs: Crosshair (Mission), Zap (Tech), Shield (Armory)
+        val iconResIds = intArrayOf(
+            R.drawable.ic_crosshair,
+            R.drawable.ic_zap,
+            R.drawable.ic_shield
+        )
         for (i in 0 until 3) {
             val tabCell = FrameLayout(context).apply {
                 setOnClickListener { v ->
@@ -900,7 +995,7 @@ class MainUiController(
                 }
             }
 
-            // Topborder #222222 across the bar
+            // Top border #222222 across the bar
             val topBorder = View(context).apply {
                 setBackgroundColor(Color.parseColor("#222222"))
             }
@@ -922,10 +1017,9 @@ class MainUiController(
             }
             bottomTabContainers[i] = contentCol
 
-            val iconTv = TextView(context).apply {
-                text = icons[i]
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
-                gravity = Gravity.CENTER
+            val iconIv = ImageView(context).apply {
+                setImageResource(iconResIds[i])
+                scaleType = ImageView.ScaleType.FIT_CENTER
             }
             val labelTv = TextView(context).apply {
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 10f)
@@ -933,12 +1027,12 @@ class MainUiController(
                 letterSpacing = 0.10f
                 gravity = Gravity.CENTER
             }
-            bottomTabIcons[i] = iconTv
+            bottomTabIcons[i] = iconIv
             bottomTabLabels[i] = labelTv
 
-            contentCol.addView(iconTv)
+            contentCol.addView(iconIv, LinearLayout.LayoutParams(dp(20f), dp(20f)))
             contentCol.addView(labelTv, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-                topMargin = dp(2f)
+                topMargin = dp(5f)
             })
 
             tabCell.addView(
@@ -978,27 +1072,77 @@ class MainUiController(
             bottomMargin = dp(14f)
         })
 
-        settingsLangBtn = createModalButton { v ->
-            v.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-            engine.soundManager.playDragSelect()
-            campaignManager.language = if (campaignManager.language == "SK") "EN" else "SK"
-            refreshAllUi()
-        }
-        settingsSoundBtn = createModalButton { v ->
-            v.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-            engine.soundManager.isMuted = !engine.soundManager.isMuted
-            if (!engine.soundManager.isMuted) {
+        // 1. Language Row
+        val langRow = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            background = roundedBg(Color.parseColor("#1A1A1A"), Color.parseColor("#2A2A2A"), 1f, 8f)
+            setOnClickListener { v ->
+                v.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                 engine.soundManager.playDragSelect()
+                campaignManager.language = if (campaignManager.language.equals("sk", ignoreCase = true)) "en" else "sk"
+                refreshAllUi()
             }
-            refreshAllUi()
         }
-        settingsResetBtn = createModalButton { v ->
-            v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-            engine.soundManager.playBaseLost()
-            campaignManager.resetProgress()
-            overlay.visibility = View.GONE
-            refreshAllUi()
+        val langIcon = createLucideIcon(R.drawable.ic_globe, 15f, Color.parseColor("#4DF1FF")).apply {
+            (layoutParams as LinearLayout.LayoutParams).marginEnd = dp(8f)
         }
+        settingsLangBtnText = TextView(context).apply {
+            setTextColor(Color.parseColor("#4DF1FF"))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 11.5f)
+            typeface = Typeface.DEFAULT_BOLD
+        }
+        langRow.addView(langIcon)
+        langRow.addView(settingsLangBtnText)
+
+        // 2. Sound Row
+        val soundRow = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            background = roundedBg(Color.parseColor("#1A1A1A"), Color.parseColor("#2A2A2A"), 1f, 8f)
+            setOnClickListener { v ->
+                v.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                engine.soundManager.isMuted = !engine.soundManager.isMuted
+                if (!engine.soundManager.isMuted) {
+                    engine.soundManager.playDragSelect()
+                }
+                refreshAllUi()
+            }
+        }
+        settingsSoundBtnIcon = createLucideIcon(R.drawable.ic_volume_on, 15f, Color.parseColor("#4ADE80")).apply {
+            (layoutParams as LinearLayout.LayoutParams).marginEnd = dp(8f)
+        }
+        settingsSoundBtnText = TextView(context).apply {
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 11.5f)
+            typeface = Typeface.DEFAULT_BOLD
+        }
+        soundRow.addView(settingsSoundBtnIcon)
+        soundRow.addView(settingsSoundBtnText)
+
+        // 3. Reset Progress Row
+        val resetRow = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            background = roundedBg(Color.parseColor("#1A1A1A"), Color.parseColor("#2A2A2A"), 1f, 8f)
+            setOnClickListener { v ->
+                v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                engine.soundManager.playBaseLost()
+                campaignManager.resetProgress()
+                overlay.visibility = View.GONE
+                refreshAllUi()
+            }
+        }
+        val resetIcon = createLucideIcon(R.drawable.ic_trash, 15f, Color.parseColor("#FF3366")).apply {
+            (layoutParams as LinearLayout.LayoutParams).marginEnd = dp(8f)
+        }
+        settingsResetBtnText = TextView(context).apply {
+            setTextColor(Color.parseColor("#FF3366"))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 11.5f)
+            typeface = Typeface.DEFAULT_BOLD
+        }
+        resetRow.addView(resetIcon)
+        resetRow.addView(settingsResetBtnText)
+
         settingsCloseBtn = TextView(context).apply {
             gravity = Gravity.CENTER
             setTextColor(Color.parseColor("#94A3B8"))
@@ -1012,23 +1156,13 @@ class MainUiController(
             }
         }
 
-        card.addView(settingsLangBtn, LinearLayout.LayoutParams(dp(250f), dp(40f)).apply { bottomMargin = dp(10f) })
-        card.addView(settingsSoundBtn, LinearLayout.LayoutParams(dp(250f), dp(40f)).apply { bottomMargin = dp(10f) })
-        card.addView(settingsResetBtn, LinearLayout.LayoutParams(dp(250f), dp(40f)).apply { bottomMargin = dp(8f) })
+        card.addView(langRow, LinearLayout.LayoutParams(dp(250f), dp(40f)).apply { bottomMargin = dp(10f) })
+        card.addView(soundRow, LinearLayout.LayoutParams(dp(250f), dp(40f)).apply { bottomMargin = dp(10f) })
+        card.addView(resetRow, LinearLayout.LayoutParams(dp(250f), dp(40f)).apply { bottomMargin = dp(8f) })
         card.addView(settingsCloseBtn)
 
         overlay.addView(card, FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER))
         return overlay
-    }
-
-    private fun createModalButton(onClick: (View) -> Unit): TextView {
-        return TextView(context).apply {
-            gravity = Gravity.CENTER
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 11.5f)
-            typeface = Typeface.DEFAULT_BOLD
-            background = roundedBg(Color.parseColor("#1A1A1A"), Color.parseColor("#2A2A2A"), 1f, 8f)
-            setOnClickListener(onClick)
-        }
     }
 
     private fun buildInGameHudOverlay() {
@@ -1071,28 +1205,36 @@ class MainUiController(
             }
         )
 
-        // Action Buttons: Home, Restart, Pause
-        val homeBtn = createHudIconButton("🏠") { v ->
+        // Action Buttons with Lucide Icons: Home, Restart, Pause
+        val homeBtn = createHudLucideButton(R.drawable.ic_home) { v ->
             v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
             engine.soundManager.playDragSelect()
             engine.isPaused = false
             engine.screenState = ScreenState.MAIN_MENU
             refreshAllUi()
         }
-        val restartBtn = createHudIconButton("🔄") { v ->
+        val restartBtn = createHudLucideButton(R.drawable.ic_rotate_ccw) { v ->
             v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
             engine.restartLevel(context)
             refreshAllUi()
         }
-        hudPauseBtn = createHudIconButton("⏸") { v ->
-            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-            engine.isPaused = !engine.isPaused
-            refreshAllUi()
+        hudPauseIcon = ImageView(context).apply {
+            setImageResource(R.drawable.ic_pause)
+            setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+        }
+        val pauseBtn = FrameLayout(context).apply {
+            background = roundedBg(Color.argb(140, 30, 41, 59), Color.argb(180, 71, 85, 105), 1.2f, 8f)
+            addView(hudPauseIcon, FrameLayout.LayoutParams(dp(16f), dp(16f), Gravity.CENTER))
+            setOnClickListener { v ->
+                v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                engine.isPaused = !engine.isPaused
+                refreshAllUi()
+            }
         }
 
         topBar.addView(homeBtn, LinearLayout.LayoutParams(dp(36f), dp(36f)).apply { marginEnd = dp(6f) })
         topBar.addView(restartBtn, LinearLayout.LayoutParams(dp(36f), dp(36f)).apply { marginEnd = dp(6f) })
-        topBar.addView(hudPauseBtn, LinearLayout.LayoutParams(dp(36f), dp(36f)))
+        topBar.addView(pauseBtn, LinearLayout.LayoutParams(dp(36f), dp(36f)))
 
         inGameHudOverlay.addView(
             topBar,
@@ -1122,10 +1264,9 @@ class MainUiController(
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 11.5f)
             gravity = Gravity.CENTER
         }
-        gameOverPrimaryBtn = TextView(context).apply {
+        gameOverPrimaryBtn = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13.5f)
-            typeface = Typeface.DEFAULT_BOLD
             setOnClickListener { v ->
                 v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                 if (engine.status == GameStatus.VICTORY) {
@@ -1136,11 +1277,19 @@ class MainUiController(
                 refreshAllUi()
             }
         }
-        gameOverHomeBtn = TextView(context).apply {
-            gravity = Gravity.CENTER
-            setTextColor(Color.WHITE)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f)
+        gameOverPrimaryIcon = createLucideIcon(R.drawable.ic_play, 14f, Color.parseColor("#0A0401")).apply {
+            (layoutParams as LinearLayout.LayoutParams).marginEnd = dp(8f)
+        }
+        gameOverPrimaryText = TextView(context).apply {
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13.5f)
             typeface = Typeface.DEFAULT_BOLD
+        }
+        gameOverPrimaryBtn.addView(gameOverPrimaryIcon)
+        gameOverPrimaryBtn.addView(gameOverPrimaryText)
+
+        val homeModalBtn = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
             background = roundedBg(Color.parseColor("#1A1A1A"), Color.parseColor("#333333"), 1f, 10f)
             setOnClickListener { v ->
                 v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
@@ -1149,6 +1298,16 @@ class MainUiController(
                 refreshAllUi()
             }
         }
+        val homeModalIcon = createLucideIcon(R.drawable.ic_home, 14f, Color.WHITE).apply {
+            (layoutParams as LinearLayout.LayoutParams).marginEnd = dp(8f)
+        }
+        gameOverHomeText = TextView(context).apply {
+            setTextColor(Color.WHITE)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f)
+            typeface = Typeface.DEFAULT_BOLD
+        }
+        homeModalBtn.addView(homeModalIcon)
+        homeModalBtn.addView(gameOverHomeText)
 
         gameOverCard.addView(gameOverTitleText)
         gameOverCard.addView(gameOverSubText, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
@@ -1156,7 +1315,7 @@ class MainUiController(
             bottomMargin = dp(18f)
         })
         gameOverCard.addView(gameOverPrimaryBtn, LinearLayout.LayoutParams(dp(210f), dp(40f)).apply { bottomMargin = dp(10f) })
-        gameOverCard.addView(gameOverHomeBtn, LinearLayout.LayoutParams(dp(210f), dp(40f)))
+        gameOverCard.addView(homeModalBtn, LinearLayout.LayoutParams(dp(210f), dp(40f)))
 
         gameOverModalOverlay.addView(
             gameOverCard,
@@ -1169,19 +1328,22 @@ class MainUiController(
         )
     }
 
-    private fun createHudIconButton(symbol: String, onClick: (View) -> Unit): TextView {
-        return TextView(context).apply {
-            text = symbol
-            gravity = Gravity.CENTER
-            setTextColor(Color.WHITE)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+    private fun createHudLucideButton(@DrawableRes iconRes: Int, onClick: (View) -> Unit): FrameLayout {
+        return FrameLayout(context).apply {
             background = roundedBg(Color.argb(140, 30, 41, 59), Color.argb(180, 71, 85, 105), 1.2f, 8f)
+            addView(
+                ImageView(context).apply {
+                    setImageResource(iconRes)
+                    setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+                },
+                FrameLayout.LayoutParams(dp(16f), dp(16f), Gravity.CENTER)
+            )
             setOnClickListener(onClick)
         }
     }
 
     fun refreshAllUi() {
-        val isSk = campaignManager.language == "SK"
+        val res = localizedResources()
         val isPlaying = engine.screenState == ScreenState.PLAYING
 
         livingBackgroundView.visibility = if (isPlaying) View.GONE else View.VISIBLE
@@ -1190,8 +1352,8 @@ class MainUiController(
 
         if (!isPlaying) {
             // Top HUD currencies
-            creditsText.text = "🪙 ${campaignManager.formatNumber(campaignManager.credits)}"
-            gemsText.text = "💎 ${campaignManager.formatNumber(campaignManager.gems)}"
+            creditsText.text = res.getString(R.string.currency_credits_format, campaignManager.formatNumber(campaignManager.credits))
+            gemsText.text = res.getString(R.string.currency_gems_format, campaignManager.formatNumber(campaignManager.gems))
 
             // Middle content visibility
             val isLevelSelect = engine.screenState == ScreenState.LEVEL_SELECT
@@ -1200,91 +1362,89 @@ class MainUiController(
             armoryTabContainer.visibility = if (!isLevelSelect && engine.activeMenuTab == 2) View.VISIBLE else View.GONE
             levelSelectContainer.visibility = if (isLevelSelect) View.VISIBLE else View.GONE
 
-            // Mission tab texts
+            // Mission tab texts from strings.xml / values-sk/strings.xml
             val lvl = campaignManager.playerLevel
-            val rank = campaignManager.getRankName()
+            val rank = res.getString(campaignManager.getRankResId())
             val sectors = campaignManager.sectorsConquered
             val winRate = String.format(Locale.US, "%.1f%%", campaignManager.getWinRatePercent())
             val streak = campaignManager.winStreak
 
-            rankBadgeText.text = if (isSk) "$rank • ÚROVEŇ $lvl" else "$rank • LVL $lvl"
-            subtitleText.text = if (isSk) "TAKTICKÁ DOBÝVACIA STRATÉGIA V REÁLNOM ČASE" else "REAL-TIME TACTICAL SWARM CONQUEST"
-            statCardTitleText.text = if (isSk) "ÚROVEŇ HRÁČA" else "PLAYER LEVEL"
-            statCardLevelText.text = "LVL $lvl"
-            statCardSectorsText.text = if (isSk) "$sectors DOBYTÝCH SEKTOROV" else "$sectors SECTORS CONQUERED"
-            statCardWinRateText.text = if (isSk) "ÚSPEŠNOSŤ: $winRate" else "WIN RATE: $winRate"
-            statCardStreakText.text = if (isSk) "SÉRIA: $streak VÍŤAZSTIEV" else "STREAK: $streak WINS"
+            rankBadgeText.text = res.getString(R.string.rank_badge_format, rank, lvl)
+            subtitleText.text = res.getString(R.string.logo_subtitle)
+            statCardTitleText.text = res.getString(R.string.player_level_label)
+            statCardLevelText.text = res.getString(R.string.player_level_value, lvl)
+            statCardSectorsText.text = res.getString(R.string.sectors_conquered_format, sectors)
+            statCardWinRateText.text = res.getString(R.string.win_rate_format, winRate)
+            statCardStreakText.text = res.getString(R.string.streak_format, streak)
 
             val lastSec = campaignManager.lastSector
             val lastPts = campaignManager.formatNumber(campaignManager.lastScore)
             val lastCr = campaignManager.lastCreditsReward
             val lastGm = campaignManager.lastGemsReward
-            lastSectorLeftText.text = if (isSk) "POSL. SEKTOR $lastSec ▾" else "LAST SECTOR $lastSec ▾"
-            lastSectorRightText.text = "$lastPts PTS   +$lastCr 🪙   +$lastGm 💎"
+            lastSectorLeftText.text = res.getString(R.string.last_sector_format, lastSec)
+            lastSectorRightText.text = res.getString(R.string.last_sector_rewards_format, lastPts, lastCr, lastGm)
 
-            launchMissionBtn.text = if (isSk) "▶   SPUSTIŤ MISIU" else "▶   LAUNCH MISSION"
-            instructionText1.text = if (isSk) "POTIAHNI ZO ZÁKLADNE PRE ÚTOK // ROJOVÁ OFENZÍVA" else "DRAG FROM BASE TO ATTACK // SWARM CONQUEST"
-            instructionText2.text = if (isSk) "SPOJ VIACERO ZÁKLADNÍ JEDNÝM ŤAHOM" else "CONNECT MULTIPLE NODES TO SWARM"
+            launchMissionBtnText.text = res.getString(R.string.launch_mission)
+            instructionText1.text = res.getString(R.string.tactical_hint_1)
+            instructionText2.text = res.getString(R.string.tactical_hint_2)
 
-            if (engine.activeMenuTab == 1) populateTechTab()
-            if (engine.activeMenuTab == 2) populateArmoryTab()
-            if (isLevelSelect) populateLevelSelect()
+            if (engine.activeMenuTab == 1) populateTechTab(res)
+            if (engine.activeMenuTab == 2) populateArmoryTab(res)
+            if (isLevelSelect) populateLevelSelect(res)
 
-            // Bottom Tabs state
-            val tabTitles = if (isSk) arrayOf("MISIA", "TECH", "PROFIL") else arrayOf("MISSION", "TECH", "ARMORY")
+            // Bottom Tabs state (Monochrome Lucide icons tinted #FFC629 when active, #666666 when inactive)
+            val tabTitleResIds = intArrayOf(R.string.tab_mission, R.string.tab_tech, R.string.tab_armory)
             for (i in 0 until 3) {
                 val active = !isLevelSelect && engine.activeMenuTab == i
+                val tintColor = if (active) Color.parseColor("#FFC629") else Color.parseColor("#666666")
                 bottomTabIndicators[i]?.visibility = if (active) View.VISIBLE else View.INVISIBLE
-                bottomTabIcons[i]?.setTextColor(if (active) Color.parseColor("#FFC629") else Color.parseColor("#666666"))
-                bottomTabLabels[i]?.text = tabTitles[i]
-                bottomTabLabels[i]?.setTextColor(if (active) Color.parseColor("#FFC629") else Color.parseColor("#666666"))
+                bottomTabIcons[i]?.setColorFilter(tintColor, PorterDuff.Mode.SRC_IN)
+                bottomTabLabels[i]?.text = res.getString(tabTitleResIds[i])
+                bottomTabLabels[i]?.setTextColor(tintColor)
                 bottomTabContainers[i]?.translationY = if (active) -dpF(2f) else 0f
                 bottomTabContainers[i]?.setBackgroundColor(if (active) Color.argb(18, 255, 198, 41) else Color.TRANSPARENT)
             }
 
-            // Settings Modal texts
-            settingsTitleText.text = if (isSk) "NASTAVENIA" else "SETTINGS"
-            settingsLangBtn.text = if (isSk) "JAZYK / LANGUAGE: SK 🇸🇰" else "LANGUAGE / JAZYK: EN 🇬🇧"
-            settingsLangBtn.setTextColor(Color.parseColor("#4DF1FF"))
+            // Settings Modal texts & monochrome Lucide icons
+            settingsTitleText.text = res.getString(R.string.settings_title)
+            settingsLangBtnText.text = res.getString(R.string.settings_language)
 
             val muted = engine.soundManager.isMuted
-            settingsSoundBtn.text = if (isSk) {
-                if (muted) "ZVUKY (SFX): VYPNUTÉ 🔇" else "ZVUKY (SFX): ZAPNUTÉ 🔊"
-            } else {
-                if (muted) "SOUND SFX: MUTED 🔇" else "SOUND SFX: ACTIVE 🔊"
-            }
-            settingsSoundBtn.setTextColor(if (muted) Color.parseColor("#EF4444") else Color.parseColor("#4ADE80"))
+            val soundColor = if (muted) Color.parseColor("#EF4444") else Color.parseColor("#4ADE80")
+            settingsSoundBtnIcon.setImageResource(if (muted) R.drawable.ic_volume_off else R.drawable.ic_volume_on)
+            settingsSoundBtnIcon.setColorFilter(soundColor, PorterDuff.Mode.SRC_IN)
+            settingsSoundBtnText.text = res.getString(if (muted) R.string.settings_sound_muted else R.string.settings_sound_active)
+            settingsSoundBtnText.setTextColor(soundColor)
 
-            settingsResetBtn.text = if (isSk) "RESETOVAŤ PROGRES ⚠" else "RESET PROGRESS ⚠"
-            settingsResetBtn.setTextColor(Color.parseColor("#FF3366"))
-            settingsCloseBtn.text = if (isSk) "ZAVRIEŤ [✕]" else "CLOSE [✕]"
+            settingsResetBtnText.text = res.getString(R.string.settings_reset_progress)
+            settingsCloseBtn.text = res.getString(R.string.settings_close)
         } else {
             // In-Game HUD state
-            hudLevelTitleText.text = engine.levelName.uppercase()
-            hudPauseBtn.text = if (engine.isPaused) "▶" else "⏸"
+            hudLevelTitleText.text = engine.levelName.uppercase(Locale.ROOT)
+            hudPauseIcon.setImageResource(if (engine.isPaused) R.drawable.ic_play else R.drawable.ic_pause)
             hudPowerBarView.invalidate()
 
             if (engine.status != GameStatus.RUNNING) {
                 gameOverModalOverlay.visibility = View.VISIBLE
                 val isWin = engine.status == GameStatus.VICTORY
                 val accent = if (isWin) Color.parseColor("#FFC629") else Color.parseColor("#FF3366")
+                val btnTextColor = if (isWin) Color.parseColor("#0A0401") else Color.WHITE
+
                 gameOverCard.background = roundedBg(Color.parseColor("#121212"), accent, 2f, 16f)
-                gameOverTitleText.text = if (isWin) (if (isSk) "VÍŤAZSTVO!" else "VICTORY!") else (if (isSk) "PREHRA" else "DEFEAT")
+                gameOverTitleText.text = res.getString(if (isWin) R.string.victory_title else R.string.defeat_title)
                 gameOverTitleText.setTextColor(accent)
                 gameOverSubText.text = if (isWin) {
-                    if (isSk) "Sektor obsadený! +${campaignManager.lastCreditsReward} 🪙  +${campaignManager.lastGemsReward} 💎"
-                    else "Sector secured! +${campaignManager.lastCreditsReward} 🪙  +${campaignManager.lastGemsReward} 💎"
+                    res.getString(R.string.victory_subtitle_format, campaignManager.lastCreditsReward, campaignManager.lastGemsReward)
                 } else {
-                    if (isSk) "Všetky veliteľské základne boli stratené." else "All command nodes were lost."
+                    res.getString(R.string.defeat_subtitle)
                 }
-                gameOverPrimaryBtn.text = if (isWin) {
-                    if (isSk) "ĎALŠIA MISIA ▶" else "NEXT MISSION ▶"
-                } else {
-                    if (isSk) "SKÚSIŤ ZNOVA 🔄" else "RETRY MISSION 🔄"
-                }
-                gameOverPrimaryBtn.setTextColor(if (isWin) Color.parseColor("#0A0401") else Color.WHITE)
+
+                gameOverPrimaryIcon.setImageResource(if (isWin) R.drawable.ic_play else R.drawable.ic_rotate_ccw)
+                gameOverPrimaryIcon.setColorFilter(btnTextColor, PorterDuff.Mode.SRC_IN)
+                gameOverPrimaryText.text = res.getString(if (isWin) R.string.next_mission else R.string.retry_mission)
+                gameOverPrimaryText.setTextColor(btnTextColor)
                 gameOverPrimaryBtn.background = roundedBg(if (isWin) Color.parseColor("#FFC629") else Color.parseColor("#E11D48"), radiusDp = 10f)
-                gameOverHomeBtn.text = if (isSk) "HLAVNÉ MENU 🏠" else "MAIN MENU 🏠"
+                gameOverHomeText.text = res.getString(R.string.main_menu_btn)
             } else {
                 gameOverModalOverlay.visibility = View.GONE
             }
@@ -1352,4 +1512,3 @@ class MainUiController(
         }
     }
 }
-
