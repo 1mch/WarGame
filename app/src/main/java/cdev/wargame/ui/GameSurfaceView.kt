@@ -19,14 +19,10 @@ class GameSurfaceView @JvmOverloads constructor(
     val engine = GameEngine()
     val renderer = CanvasRenderer()
 
-    var onNextMission: (() -> Unit)? = null
-
     init {
         holder.addCallback(this)
         holder.setFormat(PixelFormat.RGBA_8888)
-        setOnTouchListener(GameInputHandler(engine, renderer) {
-            onNextMission?.invoke()
-        })
+        setOnTouchListener(GameInputHandler(engine, renderer))
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {

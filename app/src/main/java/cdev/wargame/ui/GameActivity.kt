@@ -12,6 +12,7 @@ class GameActivity : AppCompatActivity() {
 
     private lateinit var gameSurfaceView: GameSurfaceView
     private lateinit var campaignManager: CampaignManager
+    private lateinit var uiController: MainUiController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -20,38 +21,54 @@ class GameActivity : AppCompatActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         campaignManager = CampaignManager(this)
-
         gameSurfaceView = GameSurfaceView(this)
-        setContentView(gameSurfaceView)
-
-        // Hide system bars AFTER setContentView so decorView is initialized
-        hideSystemBars()
 
         // Link campaign manager to engine
         gameSurfaceView.engine.campaignManager = campaignManager
 
         gameSurfaceView.engine.onLevelCompleted = { levelIndex ->
             campaignManager.completeLevel(levelIndex)
-        }
-
-        gameSurfaceView.onNextMission = {
-            val nextLevel = if (campaignManager.currentLevel < campaignManager.maxCampaignLevels) {
-                campaignManager.currentLevel + 1
-            } else {
-                1
+            runOnUiThread {
+                if (::uiController.isInitialized) {
+                    uiController.refreshAllUi()
+                }
             }
-            campaignManager.currentLevel = nextLevel
-            gameSurfaceView.engine.loadLevel(nextLevel, this, startPlaying = true)
         }
 
-        // Start at Main Menu with live background level preview
+        uiController = MainUiController(
+            context = this,
+            engine = gameSurfaceView.engine,
+            campaignManager = campaignManager,
+            gameSurfaceView = gameSurfaceView,
+            onNextMission = {
+                val nextLevel = if (campaignManager.currentLevel < campaignManager.maxCampaignLevels) {
+                    campaignManager.currentLevel + 1
+                } else {
+                    1
+                }
+                campaignManager.currentLevel = nextLevel
+                gameSurfaceView.engine.loadLevel(nextLevel, this, startPlaying = true)
+                uiController.refreshAllUi()
+            }
+        )
+
+        setContentView(uiController.rootLayout)
+
+        // Hide system bars AFTER setContentView so decorView is initialized
+        hideSystemBars()
+
+        // Start at Main Menu
         gameSurfaceView.engine.loadLevel(campaignManager.currentLevel, this, startPlaying = false)
+        uiController.refreshAllUi()
     }
 
     override fun onResume() {
         super.onResume()
         hideSystemBars()
         gameSurfaceView.startLoop()
+        if (::uiController.isInitialized) {
+            uiController.refreshAllUi()
+        }
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
