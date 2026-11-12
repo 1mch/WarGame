@@ -597,3 +597,292 @@ Pre Android Canvas verziu sa odporúča štandardný `SoundPool` so zvukovými e
 3. [ ] **Pohyb vojska:** Jednotky lietajú v kŕdli bez prekrývania, prirodzene obtekajú cudzie základne a skaly a nepresekávajú ich textúru.
 4. [ ] **Regenerácia:** Neutrálne základne neprodukujú vojsko, vlastnené základne produkujú podľa svojho typu až do limitu.
 5. [ ] **Výkon:** Plynulých 60 až 120 FPS aj pri 400+ jednotkách na obrazovke vďaka `SurfaceView` na dedikovanom vlákne.
+
+---
+
+## 13. Špecifikácia hlavnej obrazovky (Main Menu & Living Background)
+
+Hlavná obrazovka (**Main Menu**) slúži ako centrálny rozbočovač hráča pred spustením misie. Vyniká prémiovým **Dark Cyber / Neo-Arcade** vizuálnym štýlom bez rozostrení (Zero Blur), s vysokým kontrastom a živým animovaným pozadím.
+
+### 13.1 Vizuálna a priestorová štruktúra hlavnej obrazovky
+
+Obrazovka je rozdelená na 3 vertikálne zóny:
+
+```
++-------------------------------------------------------------+
+| [TOP HUD]  🪙 2,450 | 💎 48          [⚙ Nastavenia]        | <- Fixná horná lišta (Safe Area padding)
++-------------------------------------------------------------+
+|                                                             |
+|   [● COMMANDER • LVL 12]                                    | <- Pulzujúci Rank Badge
+|                                                             |
+|           W A R G A M E . I O                               | <- Masívne logo s Cyan akcentom
+|        REAL-TIME TACTICAL SWARM CONQUEST                    | <- Podtitul
+|   ===============================================           | <- Gradientový svetelný oddeľovač
+|                                                             |
+|   +-----------------------------------------------------+   |
+|   |                  PLAYER LEVEL                       |   |
+|   |                    LVL 12                           |   | <- Karta hráča (Zlaté číslo, tieň)
+|   |             12 SECTORS CONQUERED                    |   |
+|   |   -----------------------------------------------   |   |
+|   |   WIN RATE: 85.7%           STREAK: 4 WINS          |   |
+|   +-----------------------------------------------------+   |
+|                                                             |
+|   +-----------------------------------------------------+   |
+|   | LAST SECTOR 7      4,850 PTS   +150 🪙   +6 💎      |   | <- Súhrnná pilulka poslednej hry
+|   +-----------------------------------------------------+   |
+|                                                             |
+|   +=====================================================+   |
+|   |  ▶   L A U N C H   M I S S I O N                    |   | <- Hlavné tlačidlo (Breathing pulse)
+|   +=====================================================+   |
+|          DRAG FROM BASE TO ATTACK // SWARM CONQUEST         | <- Taktická inštrukcia
+|                                                             |
+| ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ |
+| [LIVING BACKGROUND: Kozmický prach + Rotujúci taktický radar]| <- Beží v pozadí pod celým UI
++-------------------------------------------------------------+
+| [BOTTOM TABS]   [MISSION (Active)]   [TECH]   [PROFILE]     | <- Fixná navigačná lišta
++-------------------------------------------------------------+
+```
+
+---
+
+### 13.2 Detailný rozpad komponentov hlavnej obrazovky
+
+#### 1. Horná lišta (Top HUD)
+- **Umiestnenie:** Fixne navrchu, rešpektuje `safe-area-inset-top` (Notch padding minimálne $28 \cdot s$).
+- **Výška:** $56 \cdot s + \text{safeTop}$.
+- **Pozadie:** Vertikálny gradient zhora nadol (`rgba(0,0,0, 0.95)` $\rightarrow$ `transparent`).
+- **Prvky:**
+  - **Mena (Currency Pill):** Zaoblená pilulka (`border: 1px solid #222222`, podklad `#0A0A0A`).
+    - Kredity: Ikona 🪙 + počet kreditov (napr. `2,450`), farba `#FFC629`.
+    - Vertikálny oddeľovač: $1 \text{px}$ čiara `#333333`.
+    - Diamanty: Ikona 💎 + počet drahokamov (napr. `48`), farba `#4DF1FF`.
+  - **Tlačidlo nastavení (Settings Button):** Okrúhle tlačidlo s ozubeným kolesom (otvára modálne okno so zmenou jazyka EN/SK, zvukom SFX a resetom progresu).
+
+#### 2. Karta loga a hodnosti (Header Section)
+- **Rank Badge:**
+  - Drobná pilulka s textom napr. `PLAYER LEVEL • LVL 12` (veľkosť písma $9 \cdot s$, písmo bold, farba `#4DF1FF`).
+  - Vľavo svietiaca bodka ($4.5 \cdot s$), ktorá cyklicky pulzuje (`alpha: 0.6 -> 1.0`, `scale: 1.0 -> 1.2`).
+- **Názov hry (Logo):**
+  - Text `WARGAME` v snehovobielej farbe (`#FFFFFF`), veľkosť $36 \cdot s$, extra tučné písmo (`font-weight: 900`), letter-spacing $0.15\text{em}$.
+  - Prípona `.IO` v žiarivej cyan farbe (`#00D2FF`) alebo zlatej (`#FFC629`).
+- **Podtitul:** `REAL-TIME TACTICAL SWARM CONQUEST` (veľkosť $9 \cdot s$, farba `#888888`, tracking $0.25\text{em}$).
+- **Oddeľovacia čiara (Separator):** Výška $1.5 \cdot s$, šírka $120 \cdot s$, horizontálny gradient (`transparent` $\rightarrow$ `#FFC629` $\rightarrow$ `transparent`).
+
+#### 3. Štatistická karta hráča (Player Stat Card)
+- **Rámček:** Obdĺžnik so zaoblenými rohmi ($10 \cdot s$), podklad `#121212`, tenký okraj `#222222`.
+- **Obsah:**
+  - Horný štítok: `PLAYER LEVEL` (veľkosť $10 \cdot s$, farba `#666666`, uppercase).
+  - Hlavná hodnota: Veľké číslo úrovne (napr. `12`) v písme veľkosti $32 \cdot s$, zlatá farba `#FFC629` so svetelným tieňom `dropShadow(rgba(255, 198, 41, 0.35))`.
+  - Podtitul: `12 SECTORS CONQUERED` (farba `#4DF1FF`, písmo bold $11 \cdot s$).
+  - Spodný riadok: Rozdelený tenkou čiarou `#1E1E1E`:
+    - Úspešnosť: `WIN RATE: 85.7%` (zelená `#4ADE80`).
+    - Séria víťazstiev: `STREAK: 4 WINS` (zlatá `#FFC629`).
+
+#### 4. Súhrnná pilulka sektora (Last Sector Pill)
+- Tmavý horizontálny box (`#141414`), okraj `#222222`.
+- Zobrazuje číslo naposledy hraného sektora a získané odmeny za posledný zápas (skóre, kredity, drahokamy).
+
+#### 5. Hlavné tlačidlo "LAUNCH MISSION"
+- **Rozmer:** Šírka 100% kontajnera (max $340 \cdot s$), výška $52 \cdot s$.
+- **Vzhľad:** Žiarivý neónovo-zlatý podklad (`#FFC629`), text v sýto-čiernej farbe (`#0A0401`), ultra-tučné písmo $15 \cdot s$, tracking $0.12\text{em}$.
+- **Animácia (Breathing Pulse):** Plynulý sínusový cyklus škálovania v trvaní 2.8 s:
+  $$\text{scale} \in [1.0, 1.025], \quad \text{shadowBlur} \in [25 \cdot s, 45 \cdot s]$$
+- **Inštrukcia pod tlačidlom:** Dvojriadkový subtílny text:
+  `DRAG FROM BASE TO ATTACK` / `CONNECT MULTIPLE NODES TO SWARM` (veľkosť $9 \cdot s$, farba `#444444`).
+
+#### 6. Spodná navigačná lišta (Bottom Tabs Bar)
+- **Umiestnenie:** Fixne naspodku obrazovky, výška $84 \cdot s$, pozadie `#0B0B0B`, horný okraj `#222222`.
+- **Taby:**
+  1. **MISSION** (Ikona Radaru / Terča) – Spúšťa kampaň.
+  2. **TECH** (Ikona Blesku ⚡) – Obrazovka vylepšení jednotiek (rýchlosť, regenerácia, obrana, kapacita).
+  3. **ARMORY** (Ikona Štítu 🛡️) – Obrazovka skinov a profilu pilota.
+- **Aktívny stav:** Vybraný tab je vizuálne vyvýšený, text svieti vo farbe `#FFC629` a má aktívny horný indikátor.
+
+---
+
+### 13.3 Živé taktické pozadie (`LivingBackground`)
+
+Za celým rozhraním hlavného menu beží plynulá 2D grafická animácia pripravená pre natívny Canvas:
+
+1. **Základná farba a gradient:**
+   - Podklad: Hlboká čierna `#101010`.
+   - Stredový radiálny gradient v dolnej tretine obrazovky:
+     $$\text{Center} = (\text{width} / 2, \text{height} \cdot 0.65)$$
+     $$\text{Radius} = \max(\text{width}, \text{height}) \cdot 0.7$$
+     Farby: Zlatá žiara `rgba(255, 198, 41, 0.045)` v jadre $\rightarrow$ jemná cyan `rgba(77, 241, 255, 0.015)` $\rightarrow$ `#101010` na okrajoch.
+
+2. **Kozmický kinetický prach (Floating Particles):**
+   - 35 autonómnych svetelných častíc.
+   - Pohyb: Pomalý stúpavý drift nahor ($v_y \in [-0.5, -0.15]$, $v_x \in [-0.12, 0.12]$).
+   - Farby: 50% zlaté (`rgba(255, 198, 41, alpha)`), 30% cyan (`rgba(77, 241, 255, alpha)`), 20% biele.
+   - Pri opustení horného okraja sa častica vráti na spodok s novou náhodnou X pozíciou.
+
+3. **Rotujúci taktický vektorový radar (Cyber Radar Geometry):**
+   - Rozmer: $380 \cdot s \times 380 \cdot s$, vycentrovaný horizontálne, spodkom zapustený pod okraj (`bottom: -15%`), nepriehľadnosť `opacity = 0.20`.
+   - Rotácia: Konštantná pomalá uhlová rotácia (1 celá otáčka za 180 sekúnd).
+   - Vektorové prvky:
+     - Vonkajší prerušovaný kruh: Polomer $230 \text{px}$, farba `#FFC629`, dash `8, 12`.
+     - Segmentovaný kruh: Polomer $190 \text{px}$, farba `#4DF1FF`, dash `40, 16, 20, 16`.
+     - Šesťuholník radaru: 6 vrcholov s prerušovanou bielou čiarou `dash 6, 6`.
+     - Prekrývajúce sa navigačné trojuholníky: Ružový `#F45588` a zelený `#4ADE80`.
+     - Jadrové krúžky a zameriavací kríž (Crosshairs) pretínajúci stred.
+
+---
+
+### 13.4 Kotlin implementácia: `LivingBackgroundView.kt`
+
+Túto triedu možno použiť ako pozadie hlavnej obrazovky v natívnom Androide:
+
+```kotlin
+package cdev.wargame.ui
+
+import android.content.Context
+import android.graphics.*
+import android.util.AttributeSet
+import android.view.View
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.random.Random
+
+class LivingBackgroundView @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
+) : View(context, attrs, defStyleAttr) {
+
+    private data class Particle(
+        var x: Float,
+        var y: Float,
+        val vx: Float,
+        val vy: Float,
+        val radius: Float,
+        val color: Int
+    )
+
+    private val particles = mutableListOf<Particle>()
+    private var radarAngle = 0f
+    private var lastTime = System.nanoTime()
+
+    private val bgPaint = Paint().apply { color = Color.parseColor("#101010") }
+    private val particlePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val radarPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        particles.clear()
+        val s = w / 350f
+        repeat(35) {
+            val hueType = Random.nextInt(3)
+            val color = when (hueType) {
+                0 -> Color.argb((Random.nextFloat() * 100 + 40).toInt(), 255, 198, 41) // Zlatá
+                1 -> Color.argb((Random.nextFloat() * 100 + 40).toInt(), 77, 241, 255)  // Cyan
+                else -> Color.argb((Random.nextFloat() * 80 + 30).toInt(), 255, 255, 255)
+            }
+            particles.add(
+                Particle(
+                    x = Random.nextFloat() * w,
+                    y = Random.nextFloat() * h,
+                    vx = (Random.nextFloat() - 0.5f) * 15f * s,
+                    vy = (-Random.nextFloat() * 25f - 10f) * s,
+                    radius = (Random.nextFloat() * 1.5f + 0.8f) * s,
+                    color = color
+                )
+            )
+        }
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        val now = System.nanoTime()
+        val dt = (now - lastTime) / 1_000_000_000f
+        lastTime = now
+
+        val w = width.toFloat()
+        val h = height.toFloat()
+        val s = w / 350f
+
+        // 1. Tmavé pozadie
+        canvas.drawRect(0f, 0f, w, h, bgPaint)
+
+        // 2. Centrálny ambientný radiálny gradient
+        val radialShader = RadialGradient(
+            w / 2f, h * 0.65f, Math.max(w, h) * 0.7f,
+            intArrayOf(
+                Color.argb(12, 255, 198, 41),
+                Color.argb(4, 77, 241, 255),
+                Color.argb(240, 16, 16, 16)
+            ),
+            floatArrayOf(0f, 0.5f, 1f),
+            Shader.TileMode.CLAMP
+        )
+        val gradPaint = Paint().apply { shader = radialShader }
+        canvas.drawRect(0f, 0f, w, h, gradPaint)
+
+        // 3. Kinetické častice
+        for (p in particles) {
+            p.x += p.vx * dt
+            p.y += p.vy * dt
+
+            if (p.y < -10f) {
+                p.y = h + 10f
+                p.x = Random.nextFloat() * w
+            }
+            if (p.x < -10f) p.x = w + 10f
+            if (p.x > w + 10f) p.x = -10f
+
+            particlePaint.color = p.color
+            canvas.drawCircle(p.x, p.y, p.radius, particlePaint)
+        }
+
+        // 4. Rotujúci taktický radar
+        radarAngle += (360f / 180f) * dt // 1 celá rotácia za 180 sekúnd
+        canvas.save()
+        val radarCenterX = w / 2f
+        val radarCenterY = h * 0.85f // Umiestnený v dolnej časti
+        val radarScale = (380f * s) / 500f
+
+        canvas.translate(radarCenterX, radarCenterY)
+        canvas.rotate(radarAngle)
+        canvas.scale(radarScale, radarScale)
+
+        // Prstence
+        radarPaint.color = Color.argb(120, 255, 198, 41)
+        radarPaint.strokeWidth = 2f
+        radarPaint.pathEffect = DashPathEffect(floatArrayOf(8f, 12f), 0f)
+        canvas.drawCircle(0f, 0f, 230f, radarPaint)
+
+        radarPaint.color = Color.argb(100, 77, 241, 255)
+        radarPaint.pathEffect = DashPathEffect(floatArrayOf(40f, 16f, 20f, 16f), 0f)
+        canvas.drawCircle(0f, 0f, 190f, radarPaint)
+
+        // Vnútorné jadro a kríž
+        radarPaint.pathEffect = null
+        radarPaint.color = Color.argb(80, 255, 255, 255)
+        canvas.drawLine(-250f, 0f, 250f, 0f, radarPaint)
+        canvas.drawLine(0f, -250f, 0f, 250f, radarPaint)
+
+        canvas.restore()
+
+        // Kontinuálne prekresľovanie pre 60 FPS animáciu pozadia
+        postInvalidateOnAnimation()
+    }
+}
+```
+
+---
+
+### 13.5 Odporúčaná architektúra celej obrazovky v natívnom Androide
+
+V natívnom Androide existujú dve overené cesty pre hlavnú obrazovku:
+
+1. **Hybridný prístup (Odporúčaný):**
+   - V spodnej vrstve beží `LivingBackgroundView` (animované častice a rotujúci radar).
+   - Nad ním je štandardný natívny layout (**Jetpack Compose** alebo **ConstraintLayout v XML**) so skutočnými komponentmi (`Button`, `TextView`, `CardView`).
+   - *Výhoda:* 100% natívny prístup k systémovej prístupnosti (Accessibility), natívne animácie dotykov (Ripple effect), jednoduchá lokalizácia cez `res/values/strings.xml`.
+
+2. **Čistý Canvas prístup (100% Canvas Game Screen):**
+   - Celé menu (vrátane tlačidiel, kariet a textov) je vykresľované jedným `CanvasRenderer` cyklom, pričom dotyky sa spracovávajú cez matematické ohraničujúce obdĺžniky (`RectF.contains(x, y)`).
+   - *Výhoda:* Nulová závislosť od Android UI frameworku, jednotné vykresľovanie identické s hernou obrazovkou.
+

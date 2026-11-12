@@ -1,0 +1,14 @@
+{
+  "name": "Level 1: Outpost Assault",
+  "bases": [
+    { "id": "b1", "x": -0.7, "y": 0.5, "ownerId": 1, "initialUnits": 20, "type": "large" },
+    { "id": "b2", "x": 0.7, "y": -0.5, "ownerId": 2, "initialUnits": 18, "type": "large" },
+    { "id": "b3", "x": 0.0, "y": 0.0, "ownerId": 0, "initialUnits": 10, "type": "medium" },
+    { "id": "b4", "x": -0.4, "y": -0.3, "ownerId": 0, "initialUnits": 5, "type": "small" },
+    { "id": "b5", "x": 0.4, "y": 0.3, "ownerId": 0, "initialUnits": 5, "type": "small" }
+  ],
+  "obstacles": [
+    { "id": "obs1", "x": -0.2, "y": 0.35, "radius": 0.07, "type": "rock" },
+    { "id": "obs2", "x": 0.2, "y": -0.35, "radius": 0.07, "type": "rock" }
+  ]
+}
