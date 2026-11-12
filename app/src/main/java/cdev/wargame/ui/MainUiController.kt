@@ -108,10 +108,29 @@ class MainUiController(
     private lateinit var gameOverPrimaryText: TextView
     private lateinit var gameOverHomeText: TextView
 
+    private val fontBold: Typeface = AppFonts.bold(context)
+    private val fontBlack: Typeface = AppFonts.black(context)
+
     init {
         buildHierarchy()
+        applyInterFontRecursively(rootLayout)
         refreshAllUi()
         startHudSyncTicker()
+    }
+
+    private fun applyInterFontRecursively(view: View) {
+        when (view) {
+            is TextView -> {
+                if (view.typeface != fontBlack) {
+                    view.typeface = fontBold
+                }
+            }
+            is ViewGroup -> {
+                for (i in 0 until view.childCount) {
+                    applyInterFontRecursively(view.getChildAt(i))
+                }
+            }
+        }
     }
 
     private fun localizedResources(): Resources {
@@ -394,7 +413,7 @@ class MainUiController(
             }
             text = span
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 34f)
-            typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
+            typeface = fontBlack
             letterSpacing = 0.14f
             gravity = Gravity.CENTER
         }
@@ -452,7 +471,7 @@ class MainUiController(
         statCardLevelText = TextView(context).apply {
             setTextColor(Color.parseColor("#FFC629"))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 32f)
-            typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
+            typeface = fontBlack
             setShadowLayer(dpF(10f), 0f, dpF(2f), Color.argb(95, 255, 198, 41))
         }
         statCardSectorsText = TextView(context).apply {
@@ -549,7 +568,7 @@ class MainUiController(
         launchMissionBtnText = TextView(context).apply {
             setTextColor(Color.parseColor("#0A0401"))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
-            typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
+            typeface = fontBlack
             letterSpacing = 0.12f
         }
         launchMissionBtn.addView(playIcon)
@@ -1388,9 +1407,18 @@ class MainUiController(
             instructionText1.text = res.getString(R.string.tactical_hint_1)
             instructionText2.text = res.getString(R.string.tactical_hint_2)
 
-            if (engine.activeMenuTab == 1) populateTechTab(res)
-            if (engine.activeMenuTab == 2) populateArmoryTab(res)
-            if (isLevelSelect) populateLevelSelect(res)
+            if (engine.activeMenuTab == 1) {
+                populateTechTab(res)
+                applyInterFontRecursively(techTabContainer)
+            }
+            if (engine.activeMenuTab == 2) {
+                populateArmoryTab(res)
+                applyInterFontRecursively(armoryTabContainer)
+            }
+            if (isLevelSelect) {
+                populateLevelSelect(res)
+                applyInterFontRecursively(levelSelectContainer)
+            }
 
             // Bottom Tabs state (Monochrome Lucide icons tinted #FFC629 when active, #666666 when inactive)
             val tabTitleResIds = intArrayOf(R.string.tab_mission, R.string.tab_tech, R.string.tab_armory)

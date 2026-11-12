@@ -22,6 +22,7 @@ class GameSurfaceView @JvmOverloads constructor(
     init {
         holder.addCallback(this)
         holder.setFormat(PixelFormat.RGBA_8888)
+        renderer.setTypeface(AppFonts.bold(context))
         setOnTouchListener(GameInputHandler(engine, renderer))
     }
 

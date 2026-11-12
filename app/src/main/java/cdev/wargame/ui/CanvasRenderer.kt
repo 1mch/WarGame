@@ -79,6 +79,10 @@ class CanvasRenderer {
     private val arcRect = RectF()
     private val path = Path()
 
+    fun setTypeface(typeface: Typeface) {
+        textPaint.typeface = typeface
+    }
+
     fun resize(w: Int, h: Int) {
         width = w
         height = h
