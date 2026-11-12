@@ -15,66 +15,68 @@ class GameInputHandler(
 ) : View.OnTouchListener {
 
     override fun onTouch(v: View, event: MotionEvent): Boolean {
-        if (engine.screenState != ScreenState.PLAYING || engine.status != GameStatus.RUNNING || engine.isPaused) {
-            return false
-        }
-
-        val lx = renderer.toLogicalX(event.x)
-        val ly = renderer.toLogicalY(event.y)
-
-        when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN -> {
-                val touchedBase = findBaseAtLogical(lx, ly)
-                if (touchedBase != null && touchedBase.ownerId == 1) {
-                    engine.dragState.active = true
-                    engine.dragState.startBases.clear()
-                    engine.dragState.startBases.add(touchedBase)
-                    engine.dragState.pointerX = lx
-                    engine.dragState.pointerY = ly
-                    engine.dragState.hoverBase = null
-                    engine.soundManager.playDragSelect()
-                    v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                }
+        synchronized(engine.stateLock) {
+            if (engine.screenState != ScreenState.PLAYING || engine.status != GameStatus.RUNNING || engine.isPaused) {
+                return false
             }
 
-            MotionEvent.ACTION_MOVE -> {
-                if (engine.dragState.active) {
-                    engine.dragState.pointerX = lx
-                    engine.dragState.pointerY = ly
+            val lx = renderer.toLogicalX(event.x)
+            val ly = renderer.toLogicalY(event.y)
 
-                    val hover = findBaseAtLogical(lx, ly)
-                    engine.dragState.hoverBase = hover
-
-                    // Multi-drag: if dragging over another friendly base, add it to startBases
-                    if (hover != null && hover.ownerId == 1 && !engine.dragState.startBases.contains(hover)) {
-                        engine.dragState.startBases.add(hover)
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    val touchedBase = findBaseAtLogical(lx, ly)
+                    if (touchedBase != null && touchedBase.ownerId == 1) {
+                        engine.dragState.active = true
+                        engine.dragState.startBases.clear()
+                        engine.dragState.startBases.add(touchedBase)
+                        engine.dragState.pointerX = lx
+                        engine.dragState.pointerY = ly
+                        engine.dragState.hoverBase = null
                         engine.soundManager.playDragSelect()
-                        v.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                        v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                     }
                 }
-            }
 
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                if (engine.dragState.active) {
-                    val target = engine.dragState.hoverBase
-                    if (target != null) {
-                        var dispatchedAny = false
-                        for (startBase in engine.dragState.startBases) {
-                            if (startBase !== target && startBase.unitCount > 0) {
-                                startBase.sendUnitsTo(target, ratio = 1.0f)
-                                dispatchedAny = true
+                MotionEvent.ACTION_MOVE -> {
+                    if (engine.dragState.active) {
+                        engine.dragState.pointerX = lx
+                        engine.dragState.pointerY = ly
+
+                        val hover = findBaseAtLogical(lx, ly)
+                        engine.dragState.hoverBase = hover
+
+                        // Multi-drag: if dragging over another friendly base, add it to startBases
+                        if (hover != null && hover.ownerId == 1 && !engine.dragState.startBases.contains(hover)) {
+                            engine.dragState.startBases.add(hover)
+                            engine.soundManager.playDragSelect()
+                            v.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                        }
+                    }
+                }
+
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    if (engine.dragState.active) {
+                        val target = engine.dragState.hoverBase
+                        if (target != null) {
+                            var dispatchedAny = false
+                            for (startBase in engine.dragState.startBases) {
+                                if (startBase !== target && startBase.unitCount > 0) {
+                                    startBase.sendUnitsTo(target, ratio = 1.0f)
+                                    dispatchedAny = true
+                                }
+                            }
+                            if (dispatchedAny) {
+                                engine.soundManager.playUnitsDispatched()
+                                v.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
                             }
                         }
-                        if (dispatchedAny) {
-                            engine.soundManager.playUnitsDispatched()
-                            v.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
-                        }
+                        engine.dragState.reset()
                     }
-                    engine.dragState.reset()
                 }
             }
+            return true
         }
-        return true
     }
 
     private fun findBaseAtLogical(lx: Float, ly: Float): Base? {

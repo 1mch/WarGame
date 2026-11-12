@@ -28,7 +28,7 @@
     <!-- Last Sector Pill & Launch Button -->
     <string name="last_sector_format">LAST SECTOR %1$d</string>
     <string name="last_sector_rewards_format">%1$s PTS   +%2$d CR   +%3$d GM</string>
-    <string name="launch_mission">LAUNCH MISSION</string>
+    <string name="launch_mission">START</string>
     <string name="tactical_hint_1">DRAG FROM BASE TO ATTACK // SWARM CONQUEST</string>
     <string name="tactical_hint_2">CONNECT MULTIPLE NODES TO SWARM</string>
 

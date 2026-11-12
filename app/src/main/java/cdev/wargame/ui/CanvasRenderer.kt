@@ -115,7 +115,9 @@ class CanvasRenderer {
         }
 
         // 3..8. Render 2D Battlefield Elements (Tethers, Ripples, Obstacles, Bases + Garrison Text, Units, Particles)
-        renderGameElements(canvas, engine, now)
+        synchronized(engine.stateLock) {
+            renderGameElements(canvas, engine, now)
+        }
     }
 
     private fun renderGameElements(canvas: Canvas, engine: GameEngine, now: Long) {
