@@ -27,6 +27,9 @@ class GameActivity : AppCompatActivity() {
         // Hide system bars AFTER setContentView so decorView is initialized
         hideSystemBars()
 
+        // Link campaign manager to engine
+        gameSurfaceView.engine.campaignManager = campaignManager
+
         gameSurfaceView.engine.onLevelCompleted = { levelIndex ->
             campaignManager.completeLevel(levelIndex)
         }
@@ -38,11 +41,11 @@ class GameActivity : AppCompatActivity() {
                 1
             }
             campaignManager.currentLevel = nextLevel
-            gameSurfaceView.engine.loadLevel(nextLevel, this)
+            gameSurfaceView.engine.loadLevel(nextLevel, this, startPlaying = true)
         }
 
-        // Start initial campaign level
-        gameSurfaceView.engine.loadLevel(campaignManager.currentLevel, this)
+        // Start at Main Menu with live background level preview
+        gameSurfaceView.engine.loadLevel(campaignManager.currentLevel, this, startPlaying = false)
     }
 
     override fun onResume() {

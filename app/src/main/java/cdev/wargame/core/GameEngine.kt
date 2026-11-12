@@ -17,6 +17,12 @@ enum class GameStatus {
     DEFEAT
 }
 
+enum class ScreenState {
+    MAIN_MENU,
+    LEVEL_SELECT,
+    PLAYING
+}
+
 class DragState {
     var active: Boolean = false
     val startBases: MutableList<Base> = mutableListOf()
@@ -36,6 +42,11 @@ class GameEngine(
     val particleSystem: ParticleSystem = ParticleSystem()
 ) {
     val collisionSystem = CollisionSystem(particleSystem, soundManager)
+
+    var screenState: ScreenState = ScreenState.MAIN_MENU
+    var activeMenuTab: Int = 0 // 0 = MISSION, 1 = TECH, 2 = ARMORY/PROFILE
+    var isSettingsModalOpen: Boolean = false
+    var campaignManager: CampaignManager? = null
 
     val bases = mutableListOf<Base>()
     val units = mutableListOf<Unit>()
@@ -63,7 +74,7 @@ class GameEngine(
         isPortrait = width < height
     }
 
-    fun loadLevel(levelIndex: Int, context: Context?) {
+    fun loadLevel(levelIndex: Int, context: Context?, startPlaying: Boolean = true) {
         currentLevelIndex = levelIndex
         val levelData: LevelData = LevelLoader.loadLevel(context, levelIndex)
         levelName = levelData.name
@@ -75,6 +86,12 @@ class GameEngine(
         particleSystem.clear()
         dragState.reset()
         status = GameStatus.RUNNING
+        isPaused = false
+        isSettingsModalOpen = false
+
+        if (startPlaying) {
+            screenState = ScreenState.PLAYING
+        }
 
         // Instantiate bases
         for (b in levelData.bases) {
@@ -110,13 +127,27 @@ class GameEngine(
     }
 
     fun restartLevel(context: Context?) {
-        loadLevel(currentLevelIndex, context)
+        loadLevel(currentLevelIndex, context, startPlaying = true)
+    }
+
+    fun startCampaign(context: Context?) {
+        val targetLvl = campaignManager?.currentLevel ?: 1
+        loadLevel(targetLvl, context, startPlaying = true)
     }
 
     fun update(dtMs: Float) {
         if (isPaused) return
 
         val dtSec = dtMs / 1000f
+
+        // When in Main Menu or Level Select, background is handled by LivingBackgroundRenderer
+        if (screenState == ScreenState.MAIN_MENU || screenState == ScreenState.LEVEL_SELECT) {
+            for (base in bases) {
+                base.pulseTimer += dtMs
+            }
+            particleSystem.update(dtMs)
+            return
+        }
 
         // 1. Update bases (regeneration & unit dispatching)
         val spawnedUnits = mutableListOf<Unit>()
@@ -160,6 +191,7 @@ class GameEngine(
             if (playerBases == 0 && playerUnits == 0) {
                 status = GameStatus.DEFEAT
                 soundManager.playDefeat()
+                campaignManager?.recordDefeat(currentLevelIndex)
             } else if (enemyBases == 0 && enemyUnits == 0 && playerBases > 0) {
                 status = GameStatus.VICTORY
                 soundManager.playVictory()

@@ -6,107 +6,202 @@ import android.media.AudioFormat
 import android.media.AudioTrack
 import java.util.concurrent.Executors
 import kotlin.math.PI
+import kotlin.math.exp
 import kotlin.math.sin
-import kotlin.random.Random
 
 class SoundManager(context: Context? = null) {
 
     var isMuted: Boolean = false
     private val executor = Executors.newFixedThreadPool(2)
-    private val sampleRate = 22050
+    private val sampleRate = 32000
 
     private val soundBuffers = mutableMapOf<String, ByteArray>()
 
     init {
-        // Pre-generate procedural sound waves
+        // Pre-generate soft, warm 16-bit PCM procedural sounds
         executor.execute {
-            soundBuffers["drag_select"] = generateTone(880f, 1100f, 50, WaveType.SINE)
-            soundBuffers["dispatched"] = generateSweep(1200f, 320f, 100)
-            soundBuffers["clash"] = generateNoise(45, 0.7f)
-            soundBuffers["reinforce"] = generateChime(listOf(523f, 659f), 70)
-            soundBuffers["hit"] = generateSquareBurst(180f, 60)
-            soundBuffers["captured"] = generateFanfare(listOf(440f, 554f, 659f, 880f), 220)
-            soundBuffers["lost"] = generateSweep(260f, 110f, 280)
-            soundBuffers["victory"] = generateFanfare(listOf(523f, 659f, 784f, 1046f), 450)
-            soundBuffers["defeat"] = generateSweep(400f, 90f, 500)
+            soundBuffers["drag_select"] = generateSoftBlip(587f, 75)       // Warm D5 bell blip
+            soundBuffers["dispatched"] = generateSoftWhoosh(520f, 220f, 130) // Gentle downward air-glide
+            soundBuffers["clash"] = generateSoftClash(150f, 50)             // Low soft acoustic thud
+            soundBuffers["reinforce"] = generateSoftChime(listOf(523f, 659f), 100) // Warm C-E harmonic
+            soundBuffers["hit"] = generateSoftTap(120f, 45)                // Mellow shield absorption tap
+            soundBuffers["captured"] = generateWarmChord(listOf(330f, 392f, 523f), 300) // Lush E-G-C major triad
+            soundBuffers["lost"] = generateWarmChord(listOf(311f, 261f, 196f), 320)     // Soft mellow low descent
+            soundBuffers["victory"] = generateWarmFanfare(listOf(392f, 523f, 659f, 784f), 550) // Triumphant yet soft
+            soundBuffers["defeat"] = generateWarmChord(listOf(220f, 196f, 146f), 500)
         }
     }
 
-    private enum class WaveType { SINE, SQUARE, NOISE }
+    /**
+     * Converts a list of float audio samples (-1.0f to 1.0f) to 16-bit PCM byte array (little-endian).
+     */
+    private fun toPcm16(samples: FloatArray, masterVolume: Float = 0.38f): ByteArray {
+        val bytes = ByteArray(samples.size * 2)
+        for (i in samples.indices) {
+            val clamped = (samples[i] * masterVolume).coerceIn(-1.0f, 1.0f)
+            val shortVal = (clamped * 32767f).toInt().coerceIn(-32768, 32767)
+            bytes[i * 2] = (shortVal and 0xFF).toByte()
+            bytes[i * 2 + 1] = ((shortVal shr 8) and 0xFF).toByte()
+        }
+        return bytes
+    }
 
-    private fun generateTone(startFreq: Float, endFreq: Float, durationMs: Int, type: WaveType): ByteArray {
-        val numSamples = (sampleRate * (durationMs / 1000f)).toInt().coerceAtLeast(1)
-        val buffer = ByteArray(numSamples)
-        for (i in 0 until numSamples) {
-            val progress = i.toFloat() / numSamples
-            val freq = startFreq + (endFreq - startFreq) * progress
+    /**
+     * Soft bell blip with raised-cosine attack (no clicks) and exponential warm decay.
+     */
+    private fun generateSoftBlip(freq: Float, durationMs: Int): ByteArray {
+        val count = (sampleRate * (durationMs / 1000f)).toInt().coerceAtLeast(1)
+        val samples = FloatArray(count)
+        val attackSamples = (sampleRate * 0.008f).toInt().coerceAtLeast(1) // 8ms soft attack
+
+        for (i in 0 until count) {
             val t = i.toDouble() / sampleRate
-            val envelope = (1f - progress) // fade out
-            val sampleVal: Float = when (type) {
-                WaveType.SINE -> sin(2.0 * PI * freq * t).toFloat()
-                WaveType.SQUARE -> if (sin(2.0 * PI * freq * t) > 0) 0.8f else -0.8f
-                WaveType.NOISE -> (Random.nextFloat() * 2f - 1f)
-            }
-            buffer[i] = (sampleVal * envelope * 120f).toInt().coerceIn(-128, 127).toByte()
+            val attack = if (i < attackSamples) {
+                0.5f * (1f - kotlin.math.cos((i.toFloat() / attackSamples) * PI.toFloat()))
+            } else 1.0f
+            val decay = exp(-5.5 * (i.toDouble() / count)).toFloat()
+            // Pure fundamental sine with soft overtone
+            val wave = sin(2.0 * PI * freq * t).toFloat() + 0.25f * sin(2.0 * PI * (freq * 2f) * t).toFloat()
+            samples[i] = wave * attack * decay
         }
-        return buffer
+        return toPcm16(samples, 0.35f)
     }
 
-    private fun generateSweep(startFreq: Float, endFreq: Float, durationMs: Int): ByteArray {
-        return generateTone(startFreq, endFreq, durationMs, WaveType.SINE)
-    }
+    /**
+     * Gentle whoosh down-sweep for troop dispatch (smooth, warm, non-piercing).
+     */
+    private fun generateSoftWhoosh(startFreq: Float, endFreq: Float, durationMs: Int): ByteArray {
+        val count = (sampleRate * (durationMs / 1000f)).toInt().coerceAtLeast(1)
+        val samples = FloatArray(count)
+        val attackSamples = (sampleRate * 0.015f).toInt().coerceAtLeast(1)
 
-    private fun generateNoise(durationMs: Int, intensity: Float): ByteArray {
-        val numSamples = (sampleRate * (durationMs / 1000f)).toInt().coerceAtLeast(1)
-        val buffer = ByteArray(numSamples)
-        for (i in 0 until numSamples) {
-            val progress = i.toFloat() / numSamples
-            val envelope = (1f - progress) * (1f - progress)
-            val n = (Random.nextFloat() * 2f - 1f) * intensity * envelope
-            buffer[i] = (n * 127f).toInt().coerceIn(-128, 127).toByte()
+        var phase = 0.0
+        for (i in 0 until count) {
+            val prog = i.toFloat() / count
+            val curFreq = startFreq + (endFreq - startFreq) * (prog * prog)
+            phase += 2.0 * PI * curFreq / sampleRate
+
+            val attack = if (i < attackSamples) {
+                0.5f * (1f - kotlin.math.cos((i.toFloat() / attackSamples) * PI.toFloat()))
+            } else 1.0f
+            val decay = (1f - prog) * (1f - prog)
+            val wave = sin(phase).toFloat()
+            samples[i] = wave * attack * decay
         }
-        return buffer
+        return toPcm16(samples, 0.30f)
     }
 
-    private fun generateChime(freqs: List<Float>, durationMs: Int): ByteArray {
-        val numSamples = (sampleRate * (durationMs / 1000f)).toInt().coerceAtLeast(1)
-        val buffer = ByteArray(numSamples)
-        for (i in 0 until numSamples) {
-            val progress = i.toFloat() / numSamples
+    /**
+     * Low soft muffled acoustic pop for unit clash (replaces harsh static noise).
+     */
+    private fun generateSoftClash(freq: Float, durationMs: Int): ByteArray {
+        val count = (sampleRate * (durationMs / 1000f)).toInt().coerceAtLeast(1)
+        val samples = FloatArray(count)
+        val attackSamples = (sampleRate * 0.004f).toInt().coerceAtLeast(1)
+
+        for (i in 0 until count) {
             val t = i.toDouble() / sampleRate
-            val envelope = 1f - progress
-            var sum = 0.0
+            val prog = i.toFloat() / count
+            val attack = if (i < attackSamples) (i.toFloat() / attackSamples) else 1f
+            val decay = exp(-12.0 * prog).toFloat()
+            val wave = sin(2.0 * PI * freq * t).toFloat()
+            samples[i] = wave * attack * decay
+        }
+        return toPcm16(samples, 0.32f)
+    }
+
+    /**
+     * Soft warm harmonic chime for friendly base reinforcement.
+     */
+    private fun generateSoftChime(freqs: List<Float>, durationMs: Int): ByteArray {
+        val count = (sampleRate * (durationMs / 1000f)).toInt().coerceAtLeast(1)
+        val samples = FloatArray(count)
+        val attackSamples = (sampleRate * 0.012f).toInt().coerceAtLeast(1)
+
+        for (i in 0 until count) {
+            val t = i.toDouble() / sampleRate
+            val prog = i.toFloat() / count
+            val attack = if (i < attackSamples) {
+                0.5f * (1f - kotlin.math.cos((i.toFloat() / attackSamples) * PI.toFloat()))
+            } else 1.0f
+            val decay = exp(-4.5 * prog).toFloat()
+
+            var sum = 0f
             for (f in freqs) {
-                sum += sin(2.0 * PI * f * t)
+                sum += sin(2.0 * PI * f * t).toFloat()
             }
             sum /= freqs.size
-            buffer[i] = (sum * envelope * 115.0).toInt().coerceIn(-128, 127).toByte()
+            samples[i] = sum * attack * decay
         }
-        return buffer
+        return toPcm16(samples, 0.32f)
     }
 
-    private fun generateSquareBurst(freq: Float, durationMs: Int): ByteArray {
-        return generateTone(freq, freq * 0.6f, durationMs, WaveType.SQUARE)
+    /**
+     * Soft low-frequency damped tap for base hit.
+     */
+    private fun generateSoftTap(freq: Float, durationMs: Int): ByteArray {
+        val count = (sampleRate * (durationMs / 1000f)).toInt().coerceAtLeast(1)
+        val samples = FloatArray(count)
+        for (i in 0 until count) {
+            val t = i.toDouble() / sampleRate
+            val prog = i.toFloat() / count
+            val decay = exp(-10.0 * prog).toFloat()
+            val wave = sin(2.0 * PI * (freq * (1f - 0.3f * prog)) * t).toFloat()
+            samples[i] = wave * decay
+        }
+        return toPcm16(samples, 0.28f)
     }
 
-    private fun generateFanfare(notes: List<Float>, totalDurationMs: Int): ByteArray {
+    /**
+     * Warm lush ambient chord for base capture / loss.
+     */
+    private fun generateWarmChord(freqs: List<Float>, durationMs: Int): ByteArray {
+        val count = (sampleRate * (durationMs / 1000f)).toInt().coerceAtLeast(1)
+        val samples = FloatArray(count)
+        val attackSamples = (sampleRate * 0.035f).toInt().coerceAtLeast(1) // 35ms warm attack
+
+        for (i in 0 until count) {
+            val t = i.toDouble() / sampleRate
+            val prog = i.toFloat() / count
+            val attack = if (i < attackSamples) {
+                0.5f * (1f - kotlin.math.cos((i.toFloat() / attackSamples) * PI.toFloat()))
+            } else 1.0f
+            val decay = (1f - prog)
+
+            var sum = 0f
+            for (f in freqs) {
+                sum += sin(2.0 * PI * f * t).toFloat()
+            }
+            sum /= freqs.size
+            samples[i] = sum * attack * decay
+        }
+        return toPcm16(samples, 0.35f)
+    }
+
+    /**
+     * Soft ambient fanfare for victory.
+     */
+    private fun generateWarmFanfare(notes: List<Float>, totalDurationMs: Int): ByteArray {
         val noteCount = notes.size
-        val noteDuration = totalDurationMs / noteCount
+        val noteDurationMs = totalDurationMs / noteCount
         val totalSamples = (sampleRate * (totalDurationMs / 1000f)).toInt().coerceAtLeast(1)
-        val buffer = ByteArray(totalSamples)
+        val samples = FloatArray(totalSamples)
+
         var cursor = 0
         for (f in notes) {
-            val segSamples = (sampleRate * (noteDuration / 1000f)).toInt()
+            val segSamples = (sampleRate * (noteDurationMs / 1000f)).toInt()
+            val segAttack = (segSamples * 0.15f).toInt().coerceAtLeast(1)
             for (i in 0 until segSamples) {
                 if (cursor >= totalSamples) break
-                val prog = i.toFloat() / segSamples
-                val env = 1f - (prog * 0.4f)
                 val t = i.toDouble() / sampleRate
+                val prog = i.toFloat() / segSamples
+                val attack = if (i < segAttack) (i.toFloat() / segAttack) else 1f
+                val env = (1f - prog * 0.5f) * attack
                 val s = sin(2.0 * PI * f * t).toFloat() * env
-                buffer[cursor++] = (s * 110f).toInt().coerceIn(-128, 127).toByte()
+                samples[cursor++] = s
             }
         }
-        return buffer
+        return toPcm16(samples, 0.35f)
     }
 
     private fun playPcm(key: String) {
@@ -123,7 +218,7 @@ class SoundManager(context: Context? = null) {
                     )
                     .setAudioFormat(
                         AudioFormat.Builder()
-                            .setEncoding(AudioFormat.ENCODING_PCM_8BIT)
+                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
                             .setSampleRate(sampleRate)
                             .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
                             .build()
@@ -134,8 +229,8 @@ class SoundManager(context: Context? = null) {
 
                 track.write(bytes, 0, bytes.size)
                 track.play()
-                // Auto-release after playing
-                Thread.sleep((bytes.size.toLong() * 1000L / sampleRate) + 20)
+                // Auto-cleanup after audio ends
+                Thread.sleep((bytes.size.toLong() * 1000L / (sampleRate * 2)) + 30)
                 track.stop()
                 track.release()
             } catch (_: Exception) {
