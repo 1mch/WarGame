@@ -11,23 +11,27 @@ data class Faction(
 )
 
 object GameConfig {
-    // Unit properties
-    const val UNIT_RADIUS = 0.02f
-    const val BASE_SPEED = 0.35f
+    // Logical coordinate space: width = 350 (-175 .. +175), center = (0, 0)
+    const val LOGICAL_WIDTH = 350f
+    const val LOGICAL_HALF_WIDTH = 175f
+
+    // Unit properties (in logical points where 350 = screen width)
+    const val UNIT_RADIUS = 3.5f
+    const val BASE_SPEED = 62f
     const val SPEED_VARIATION = 0.15f
     const val SPAWN_INTERVAL_MS = 50L
     const val CLASH_DESTROY_CHANCE = 0.90f
 
-    // Steering behavior weights
+    // Steering behavior weights & radii (in logical points)
     const val SEEK_WEIGHT = 5.0f
-    const val SEPARATION_WEIGHT = 10.0f
-    const val SEPARATION_RADIUS = 3.5f * UNIT_RADIUS
-    const val BOUNDARY_MARGIN = 0.08f
+    const val SEPARATION_WEIGHT = 7.5f
+    const val SEPARATION_RADIUS = 3.0f * UNIT_RADIUS
+    const val BOUNDARY_MARGIN = 14f
     const val BOUNDARY_FORCE = 3.0f
-    const val BASE_AVOIDANCE_RADIUS = 0.25f
+    const val BASE_AVOIDANCE_RADIUS = 44f
     const val BASE_REPEL_WEIGHT = 9.0f
     const val BASE_TANGENT_WEIGHT = 1.5f
-    const val OBSTACLE_AVOIDANCE_RADIUS = 0.25f
+    const val OBSTACLE_AVOIDANCE_RADIUS = 44f
     const val OBSTACLE_REPEL_WEIGHT = 11.0f
     const val OBSTACLE_TANGENT_WEIGHT = 2.2f
 

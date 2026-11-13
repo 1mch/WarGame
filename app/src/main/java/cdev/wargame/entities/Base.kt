@@ -7,9 +7,9 @@ import kotlin.math.sin
 import kotlin.random.Random
 
 enum class BaseType(val maxUnits: Int, val radius: Float, val regenRateMs: Long) {
-    SMALL(25, 0.08f, 1200L),
-    MEDIUM(50, 0.10f, 800L),
-    LARGE(100, 0.13f, 500L);
+    SMALL(25, 14f, 1200L),
+    MEDIUM(50, 18f, 800L),
+    LARGE(100, 23f, 500L);
 
     companion object {
         fun fromString(str: String?): BaseType {

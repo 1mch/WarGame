@@ -9,7 +9,7 @@ import kotlin.random.Random
 class Obstacle(
     override val id: String,
     override var position: Vector2,
-    override val radius: Float = 0.075f,
+    override val radius: Float = 13f,
     val type: String = "rock"
 ) : Entity(id, position, radius, 0) {
 

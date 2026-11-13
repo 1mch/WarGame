@@ -29,7 +29,7 @@ class ParticleSystem {
     fun spawnClashSparks(pos: Vector2, color1: Int, color2: Int, count: Int = 8) {
         for (i in 0 until count) {
             val angle = Random.nextFloat() * 2f * PI.toFloat()
-            val speed = 0.2f + Random.nextFloat() * 0.4f
+            val speed = 35f + Random.nextFloat() * 70f
             val vel = Vector2(cos(angle) * speed, sin(angle) * speed)
             val color = if (i % 2 == 0) color1 else color2
             particles.add(
@@ -38,7 +38,7 @@ class ParticleSystem {
                     velocity = vel,
                     color = color,
                     maxLifeMs = 250f + Random.nextFloat() * 200f,
-                    size = 0.007f + Random.nextFloat() * 0.005f
+                    size = 1.2f + Random.nextFloat() * 0.9f
                 )
             )
         }
@@ -57,7 +57,7 @@ class ParticleSystem {
         // Also add small burst of particles
         for (i in 0 until 14) {
             val angle = Random.nextFloat() * 2f * PI.toFloat()
-            val speed = 0.15f + Random.nextFloat() * 0.35f
+            val speed = 26f + Random.nextFloat() * 61f
             val vel = Vector2(cos(angle) * speed, sin(angle) * speed)
             particles.add(
                 Particle(
@@ -65,7 +65,7 @@ class ParticleSystem {
                     velocity = vel,
                     color = color,
                     maxLifeMs = 350f + Random.nextFloat() * 250f,
-                    size = 0.008f
+                    size = 1.4f
                 )
             )
         }
@@ -74,7 +74,7 @@ class ParticleSystem {
     fun spawnBaseHit(pos: Vector2, color: Int) {
         for (i in 0 until 4) {
             val angle = Random.nextFloat() * 2f * PI.toFloat()
-            val speed = 0.1f + Random.nextFloat() * 0.2f
+            val speed = 18f + Random.nextFloat() * 35f
             val vel = Vector2(cos(angle) * speed, sin(angle) * speed)
             particles.add(
                 Particle(
@@ -82,7 +82,7 @@ class ParticleSystem {
                     velocity = vel,
                     color = color,
                     maxLifeMs = 200f,
-                    size = 0.006f
+                    size = 1.1f
                 )
             )
         }

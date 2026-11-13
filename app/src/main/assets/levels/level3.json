@@ -1,18 +1,18 @@
 {
   "name": "Level 3: Asteroid Chokepoints",
   "bases": [
-    { "id": "b1", "x": -0.7, "y": 0.6, "ownerId": 1, "initialUnits": 30, "type": "large" },
-    { "id": "b2", "x": -0.7, "y": -0.6, "ownerId": 1, "initialUnits": 15, "type": "small" },
-    { "id": "b3", "x": 0.7, "y": 0.6, "ownerId": 2, "initialUnits": 25, "type": "large" },
-    { "id": "b4", "x": 0.7, "y": -0.6, "ownerId": 2, "initialUnits": 20, "type": "medium" },
-    { "id": "b5", "x": 0.0, "y": 0.5, "ownerId": 0, "initialUnits": 15, "type": "medium" },
-    { "id": "b6", "x": 0.0, "y": -0.5, "ownerId": 0, "initialUnits": 15, "type": "medium" },
-    { "id": "b7", "x": 0.0, "y": 0.0, "ownerId": 0, "initialUnits": 20, "type": "large" }
+    { "id": "b1", "x": -122, "y": 105, "ownerId": 1, "initialUnits": 30, "type": "large" },
+    { "id": "b2", "x": -122, "y": -105, "ownerId": 1, "initialUnits": 15, "type": "small" },
+    { "id": "b3", "x": 122, "y": 105, "ownerId": 2, "initialUnits": 25, "type": "large" },
+    { "id": "b4", "x": 122, "y": -105, "ownerId": 2, "initialUnits": 20, "type": "medium" },
+    { "id": "b5", "x": 0, "y": 88, "ownerId": 0, "initialUnits": 15, "type": "medium" },
+    { "id": "b6", "x": 0, "y": -88, "ownerId": 0, "initialUnits": 15, "type": "medium" },
+    { "id": "b7", "x": 0, "y": 0, "ownerId": 0, "initialUnits": 20, "type": "large" }
   ],
   "obstacles": [
-    { "id": "obs1", "x": -0.35, "y": 0.2, "radius": 0.08, "type": "rock" },
-    { "id": "obs2", "x": -0.35, "y": -0.2, "radius": 0.08, "type": "rock" },
-    { "id": "obs3", "x": 0.35, "y": 0.2, "radius": 0.08, "type": "rock" },
-    { "id": "obs4", "x": 0.35, "y": -0.2, "radius": 0.08, "type": "rock" }
+    { "id": "obs1", "x": -62, "y": 35, "radius": 14, "type": "rock" },
+    { "id": "obs2", "x": -62, "y": -35, "radius": 14, "type": "rock" },
+    { "id": "obs3", "x": 62, "y": 35, "radius": 14, "type": "rock" },
+    { "id": "obs4", "x": 62, "y": -35, "radius": 14, "type": "rock" }
   ]
 }

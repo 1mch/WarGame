@@ -27,7 +27,7 @@ class Unit(
 
         if (!hasLeftSourceBase && sourceBase != null) {
             val d = position.distanceTo(sourceBase!!.position)
-            if (d > sourceBase!!.radius + radius + 0.015f) {
+            if (d > sourceBase!!.radius + radius + 2.5f) {
                 hasLeftSourceBase = true
             }
         }

@@ -87,10 +87,10 @@ class CanvasRenderer {
         width = w
         height = h
         isPortrait = width < height
-        scale = if (isPortrait) width / 2.0f else height / 2.0f
+        s = min(width, height) / GameConfig.LOGICAL_WIDTH
+        scale = s
         centerX = width / 2.0f
         centerY = height / 2.0f
-        s = min(width, height) / 350.0f
     }
 
     fun toScreenX(x: Float): Float = centerX + x * scale

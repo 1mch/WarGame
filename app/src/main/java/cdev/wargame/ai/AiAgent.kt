@@ -1,5 +1,6 @@
 package cdev.wargame.ai
 
+import cdev.wargame.core.GameConfig
 import cdev.wargame.entities.Base
 import kotlin.random.Random
 
@@ -35,10 +36,9 @@ class AiAgent(val ownerId: Int) {
         if (strongestBase.unitCount < 8) return
 
         // 5. Tactical target selection (Vulnerability Scoring)
-        // Score = base.unitCount * 1.5 + distanceToTarget * 20.0
         val targetBase = foreignBases.minByOrNull { base ->
             val dist = strongestBase.position.distanceTo(base.position)
-            base.unitCount * 1.5f + dist * 20f
+            base.unitCount * 1.5f + (dist / GameConfig.LOGICAL_HALF_WIDTH) * 20f
         } ?: return
 
         // 6. Send 50% of garrison to keep defense
