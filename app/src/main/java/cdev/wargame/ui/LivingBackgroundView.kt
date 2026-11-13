@@ -54,7 +54,7 @@ class LivingBackgroundRenderer {
     )
 
     private val particles = mutableListOf<Particle>()
-    private var radarAngle = 0f
+    private var elapsedSec = 0f
     private var cachedWidth = 0
     private var cachedHeight = 0
 
@@ -74,6 +74,11 @@ class LivingBackgroundRenderer {
     private val dashOuter = DashPathEffect(floatArrayOf(8f, 12f), 0f)
     private val dashMid = DashPathEffect(floatArrayOf(40f, 16f, 20f, 16f), 0f)
     private val dashHex = DashPathEffect(floatArrayOf(6f, 6f), 0f)
+    private val dashInner = DashPathEffect(floatArrayOf(14f, 10f), 0f)
+
+    // Helper functions for strictly Yellow (#FFC629) or White (#FFFFFF) + alpha
+    private fun yellowAlpha(alpha: Int): Int = Color.argb(alpha.coerceIn(0, 255), 255, 198, 41)
+    private fun whiteAlpha(alpha: Int): Int = Color.argb(alpha.coerceIn(0, 255), 255, 255, 255)
 
     fun resize(w: Int, h: Int) {
         if (w <= 0 || h <= 0) return
@@ -82,7 +87,7 @@ class LivingBackgroundRenderer {
         particles.clear()
         val s = w / 350f
 
-        // 2. Centrálny ambientný radiálny gradient v dolnej tretine obrazovky
+        // Centrálny ambientný radiálny gradient (iba žltá + biela + alpha do čiernej)
         val wf = w.toFloat()
         val hf = h.toFloat()
         gradPaint.shader = RadialGradient(
@@ -90,21 +95,21 @@ class LivingBackgroundRenderer {
             hf * 0.65f,
             max(wf, hf) * 0.7f,
             intArrayOf(
-                Color.argb(12, 255, 198, 41),  // Zlatá žiara rgba(255, 198, 41, 0.045)
-                Color.argb(4, 77, 241, 255),   // Jemná cyan rgba(77, 241, 255, 0.015)
-                Color.argb(245, 16, 16, 16)    // #101010 na okrajoch
+                yellowAlpha(14),
+                whiteAlpha(5),
+                Color.argb(245, 16, 16, 16)
             ),
             floatArrayOf(0f, 0.5f, 1f),
             Shader.TileMode.CLAMP
         )
 
-        // 35 autonómnych svetelných častíc (50% zlaté, 30% cyan, 20% biele)
+        // 35 autonómnych svetelných častíc (iba žltá alebo biela + alpha)
         repeat(35) {
-            val roll = Random.nextFloat()
-            val color = when {
-                roll < 0.50f -> Color.argb((Random.nextFloat() * 100 + 45).toInt(), 255, 198, 41) // Zlatá
-                roll < 0.80f -> Color.argb((Random.nextFloat() * 100 + 45).toInt(), 77, 241, 255) // Cyan
-                else -> Color.argb((Random.nextFloat() * 80 + 35).toInt(), 255, 255, 255)         // Biela
+            val isYellow = Random.nextFloat() < 0.60f
+            val color = if (isYellow) {
+                yellowAlpha((Random.nextFloat() * 100 + 45).toInt())
+            } else {
+                whiteAlpha((Random.nextFloat() * 85 + 35).toInt())
             }
             particles.add(
                 Particle(
@@ -125,6 +130,7 @@ class LivingBackgroundRenderer {
         }
 
         val s = w / 350f
+        elapsedSec += dt
 
         // 1. Základná hlboká čierna #101010
         canvas.drawRect(0f, 0f, w, h, bgPaint)
@@ -148,86 +154,114 @@ class LivingBackgroundRenderer {
             canvas.drawCircle(p.x, p.y, p.radius, particlePaint)
         }
 
-        // 4. Rotujúci taktický vektorový radar (Cyber Radar Geometry)
-        // 1 celá otáčka za 180 sekúnd
-        radarAngle = (radarAngle + (360f / 180f) * dt) % 360f
-
+        // 4. Taktický vektorový radar – každý element rotuje vlastnou rýchlosťou a smerom
         canvas.save()
         val radarCenterX = w / 2f
-        val radarCenterY = h * 0.85f // Spodkom zapustený pod okraj (bottom: -15%)
+        val radarCenterY = h * 0.85f
         val radarScale = (380f * s) / 500f
 
         canvas.translate(radarCenterX, radarCenterY)
-        canvas.rotate(radarAngle)
         canvas.scale(radarScale, radarScale)
 
-        // Vonkajší prerušovaný kruh: Polomer 230px, farba #FFC629, dash 8, 12 (opacity ~0.20)
-        radarPaint.strokeWidth = 2f
-        radarPaint.color = Color.argb(55, 255, 198, 41)
-        radarPaint.pathEffect = dashOuter
-        canvas.drawCircle(0f, 0f, 230f, radarPaint)
-
-        // Segmentovaný kruh: Polomer 190px, farba #4DF1FF, dash 40, 16, 20, 16
-        radarPaint.color = Color.argb(50, 77, 241, 255)
-        radarPaint.pathEffect = dashMid
-        canvas.drawCircle(0f, 0f, 190f, radarPaint)
-
-        // Šesťuholník radaru: 6 vrcholov s prerušovanou bielou čiarou dash 6, 6
-        radarPath.reset()
-        val hexRadius = 155f
-        for (i in 0 until 6) {
-            val angleRad = Math.toRadians((i * 60.0) - 30.0)
-            val hx = (cos(angleRad) * hexRadius).toFloat()
-            val hy = (sin(angleRad) * hexRadius).toFloat()
-            if (i == 0) radarPath.moveTo(hx, hy) else radarPath.lineTo(hx, hy)
+        // 4.1 Vonkajší prerušovaný kruh (r = 230, žltá + alpha, pomalá rotácia doprava +4.5°/s)
+        drawRotatedElement(canvas, elapsedSec * 4.5f) {
+            radarPaint.strokeWidth = 2f
+            radarPaint.color = yellowAlpha(65)
+            radarPaint.pathEffect = dashOuter
+            canvas.drawCircle(0f, 0f, 230f, radarPaint)
         }
-        radarPath.close()
-        radarPaint.color = Color.argb(42, 255, 255, 255)
-        radarPaint.pathEffect = dashHex
-        canvas.drawPath(radarPath, radarPaint)
 
-        // Prekrývajúce sa navigačné trojuholníky: Ružový #F45588 a zelený #4ADE80
-        radarPaint.pathEffect = null
-        radarPaint.strokeWidth = 1.6f
-
-        // Trojuholník 1 (Ružový #F45588, smerom nahor)
-        radarPath.reset()
-        val triRadius = 130f
-        for (i in 0 until 3) {
-            val angleRad = Math.toRadians((i * 120.0) - 90.0)
-            val tx = (cos(angleRad) * triRadius).toFloat()
-            val ty = (sin(angleRad) * triRadius).toFloat()
-            if (i == 0) radarPath.moveTo(tx, ty) else radarPath.lineTo(tx, ty)
+        // 4.2 Segmentovaný kruh (r = 190, biela + alpha, rotácia doľava -7.5°/s)
+        drawRotatedElement(canvas, -elapsedSec * 7.5f) {
+            radarPaint.strokeWidth = 2f
+            radarPaint.color = whiteAlpha(50)
+            radarPaint.pathEffect = dashMid
+            canvas.drawCircle(0f, 0f, 190f, radarPaint)
         }
-        radarPath.close()
-        radarPaint.color = Color.argb(45, 244, 85, 136)
-        canvas.drawPath(radarPath, radarPaint)
 
-        // Trojuholník 2 (Zelený #4ADE80, smerom nadol)
-        radarPath.reset()
-        for (i in 0 until 3) {
-            val angleRad = Math.toRadians((i * 120.0) + 90.0)
-            val tx = (cos(angleRad) * triRadius).toFloat()
-            val ty = (sin(angleRad) * triRadius).toFloat()
-            if (i == 0) radarPath.moveTo(tx, ty) else radarPath.lineTo(tx, ty)
+        // 4.3 Šesťuholník radaru (r = 155, žltá + alpha, prerušovaná čiara, rotácia doprava +3.2°/s)
+        drawRotatedElement(canvas, elapsedSec * 3.2f) {
+            radarPath.reset()
+            val hexRadius = 155f
+            for (i in 0 until 6) {
+                val angleRad = Math.toRadians((i * 60.0) - 30.0)
+                val hx = (cos(angleRad) * hexRadius).toFloat()
+                val hy = (sin(angleRad) * hexRadius).toFloat()
+                if (i == 0) radarPath.moveTo(hx, hy) else radarPath.lineTo(hx, hy)
+            }
+            radarPath.close()
+            radarPaint.strokeWidth = 1.8f
+            radarPaint.color = yellowAlpha(48)
+            radarPaint.pathEffect = dashHex
+            canvas.drawPath(radarPath, radarPaint)
         }
-        radarPath.close()
-        radarPaint.color = Color.argb(45, 74, 222, 128)
-        canvas.drawPath(radarPath, radarPaint)
 
-        // Jadrové krúžky a zameriavací kríž (Crosshairs) pretínajúci stred
-        radarPaint.color = Color.argb(40, 255, 255, 255)
-        radarPaint.strokeWidth = 1.4f
-        canvas.drawCircle(0f, 0f, 70f, radarPaint)
-        radarPaint.color = Color.argb(55, 255, 198, 41)
-        canvas.drawCircle(0f, 0f, 24f, radarPaint)
+        // 4.4 Navigačný trojuholník 1 (r = 130, biela + alpha, rotácia doľava -11.0°/s)
+        drawRotatedElement(canvas, -elapsedSec * 11.0f) {
+            radarPath.reset()
+            val triRadius = 130f
+            for (i in 0 until 3) {
+                val angleRad = Math.toRadians((i * 120.0) - 90.0)
+                val tx = (cos(angleRad) * triRadius).toFloat()
+                val ty = (sin(angleRad) * triRadius).toFloat()
+                if (i == 0) radarPath.moveTo(tx, ty) else radarPath.lineTo(tx, ty)
+            }
+            radarPath.close()
+            radarPaint.pathEffect = null
+            radarPaint.strokeWidth = 1.6f
+            radarPaint.color = whiteAlpha(45)
+            canvas.drawPath(radarPath, radarPaint)
+        }
 
-        radarPaint.color = Color.argb(38, 255, 255, 255)
-        radarPaint.strokeWidth = 1.2f
-        canvas.drawLine(-245f, 0f, 245f, 0f, radarPaint)
-        canvas.drawLine(0f, -245f, 0f, 245f, radarPaint)
+        // 4.5 Navigačný trojuholník 2 (r = 130, žltá + alpha, protibežná rotácia doprava +8.5°/s)
+        drawRotatedElement(canvas, elapsedSec * 8.5f) {
+            radarPath.reset()
+            val triRadius = 130f
+            for (i in 0 until 3) {
+                val angleRad = Math.toRadians((i * 120.0) + 90.0)
+                val tx = (cos(angleRad) * triRadius).toFloat()
+                val ty = (sin(angleRad) * triRadius).toFloat()
+                if (i == 0) radarPath.moveTo(tx, ty) else radarPath.lineTo(tx, ty)
+            }
+            radarPath.close()
+            radarPaint.pathEffect = null
+            radarPaint.strokeWidth = 1.6f
+            radarPaint.color = yellowAlpha(52)
+            canvas.drawPath(radarPath, radarPaint)
+        }
+
+        // 4.6 Vnútorný prerušovaný prstenec (r = 70, biela + alpha, rotácia doľava -16.0°/s)
+        drawRotatedElement(canvas, -elapsedSec * 16.0f) {
+            radarPaint.color = whiteAlpha(45)
+            radarPaint.strokeWidth = 1.5f
+            radarPaint.pathEffect = dashInner
+            canvas.drawCircle(0f, 0f, 70f, radarPaint)
+        }
+
+        // 4.7 Jadrový prstenec (r = 24, žltá + alpha, rýchlejšia rotácia doprava +24.0°/s)
+        drawRotatedElement(canvas, elapsedSec * 24.0f) {
+            radarPaint.color = yellowAlpha(65)
+            radarPaint.strokeWidth = 1.6f
+            radarPaint.pathEffect = dashHex
+            canvas.drawCircle(0f, 0f, 24f, radarPaint)
+        }
+
+        // 4.8 Zameriavací kríž (Crosshairs, biela + alpha, jemná rotácia doľava -1.8°/s)
+        drawRotatedElement(canvas, -elapsedSec * 1.8f) {
+            radarPaint.pathEffect = null
+            radarPaint.color = whiteAlpha(35)
+            radarPaint.strokeWidth = 1.2f
+            canvas.drawLine(-245f, 0f, 245f, 0f, radarPaint)
+            canvas.drawLine(0f, -245f, 0f, 245f, radarPaint)
+        }
 
         canvas.restore()
     }
-}
 
+    private inline fun drawRotatedElement(canvas: Canvas, angleDegrees: Float, block: () -> Unit) {
+        canvas.save()
+        canvas.rotate(angleDegrees % 360f)
+        block()
+        canvas.restore()
+    }
+}
