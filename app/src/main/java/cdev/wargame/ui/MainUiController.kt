@@ -353,15 +353,21 @@ class MainUiController(
         val scroll = ScrollView(context).apply {
             isFillViewport = true
             overScrollMode = View.OVER_SCROLL_NEVER
+            clipChildren = false
+            clipToPadding = false
         }
 
         val wrapper = FrameLayout(context).apply {
             setPadding(dp(20f), dp(8f), dp(20f), dp(8f))
+            clipChildren = false
+            clipToPadding = false
         }
 
         val column = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
+            clipChildren = false
+            clipToPadding = false
         }
 
         // 1. Pulsing Rank Badge
@@ -549,12 +555,10 @@ class MainUiController(
             }
         )
 
-        // 7. Main Button: "LAUNCH MISSION" with Lucide ic_play and 2.8s Breathing Pulse
-        launchMissionBtn = LinearLayout(context).apply {
+        // 7. Main Pill Button: "LAUNCH MISSION" with Neon Gold Glow & 2.8s Breathing Pulse
+        val glowPillBtn = GlowPillButton(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
-            background = roundedBg(Color.parseColor("#FFC629"), radiusDp = 10f)
-            elevation = dpF(8f)
             setOnClickListener { v ->
                 v.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
                 engine.soundManager.playUnitsDispatched()
@@ -562,35 +566,42 @@ class MainUiController(
                 refreshAllUi()
             }
         }
-        val playIcon = createLucideIcon(R.drawable.ic_play, 16f, Color.parseColor("#0A0401")).apply {
+        launchMissionBtn = glowPillBtn
+
+        val playIcon = createLucideIcon(R.drawable.ic_play, 26f, Color.parseColor("#0A0401")).apply {
             (layoutParams as LinearLayout.LayoutParams).marginEnd = dp(10f)
         }
         launchMissionBtnText = TextView(context).apply {
             setTextColor(Color.parseColor("#0A0401"))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 26f)
             typeface = fontBlack
-            letterSpacing = 0.12f
+            letterSpacing = 0.10f
         }
         launchMissionBtn.addView(playIcon)
         launchMissionBtn.addView(launchMissionBtnText)
 
-        // 2.8s Breathing Pulse Animation (scale 1.0 -> 1.025)
-        ObjectAnimator.ofPropertyValuesHolder(
-            launchMissionBtn,
-            PropertyValuesHolder.ofFloat(View.SCALE_X, 1.0f, 1.025f),
-            PropertyValuesHolder.ofFloat(View.SCALE_Y, 1.0f, 1.025f)
-        ).apply {
+        // 2.8s Breathing Pulse Animation (scale 1.0 -> 1.03 + dynamic glow radius)
+        ValueAnimator.ofFloat(0f, 1f).apply {
             duration = 1400L // 1.4s up + 1.4s down = 2.8s full sinusoidal cycle
             interpolator = AccelerateDecelerateInterpolator()
             repeatMode = ValueAnimator.REVERSE
             repeatCount = ValueAnimator.INFINITE
+            addUpdateListener { anim ->
+                val fraction = anim.animatedValue as Float
+                val scale = 1.0f + 0.028f * fraction
+                glowPillBtn.scaleX = scale
+                glowPillBtn.scaleY = scale
+                glowPillBtn.glowFraction = fraction
+                glowPillBtn.invalidate()
+            }
             start()
         }
 
         column.addView(
             launchMissionBtn,
-            LinearLayout.LayoutParams(dp(320f), dp(52f)).apply {
-                topMargin = dp(14f)
+            LinearLayout.LayoutParams(dp(320f), dp(56f)).apply {
+                topMargin = dp(18f)
+                bottomMargin = dp(4f)
             }
         )
 
@@ -1497,6 +1508,44 @@ class MainUiController(
             }
         }
         rootLayout.post(runnable)
+    }
+
+    private inner class GlowPillButton(context: Context) : LinearLayout(context) {
+        var glowFraction: Float = 0.5f
+
+        private val pillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+            color = Color.parseColor("#FFC629")
+        }
+        private val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeWidth = dpF(1.5f)
+            color = Color.parseColor("#FFE57F")
+        }
+
+        init {
+            setWillNotDraw(false)
+        }
+
+        override fun onDraw(canvas: Canvas) {
+            val w = width.toFloat()
+            val h = height.toFloat()
+            val radius = h / 2f
+
+            // Pulsing neon-gold outer glow (shadowBlur 16dp -> 28dp)
+            val blurRadius = dpF(16f + 12f * glowFraction)
+            val glowAlpha = (145 + (75 * glowFraction).toInt()).coerceIn(0, 255)
+            pillPaint.setShadowLayer(blurRadius, 0f, 0f, Color.argb(glowAlpha, 255, 198, 41))
+
+            // Draw pill body + glow
+            canvas.drawRoundRect(0f, 0f, w, h, radius, radius, pillPaint)
+
+            // Draw subtle inner highlight border
+            val inset = dpF(0.75f)
+            canvas.drawRoundRect(inset, inset, w - inset, h - inset, radius, radius, strokePaint)
+
+            super.onDraw(canvas)
+        }
     }
 
     private class PowerBarView(
