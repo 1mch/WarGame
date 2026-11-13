@@ -511,8 +511,6 @@ private fun MissionTabSection(
             iconRes = R.drawable.ic_play,
             onClick = onLaunchMission,
             modifier = Modifier.width(320.dp),
-            height = 58.dp,
-            fontSize = 20.sp
         )
 
         Spacer(modifier = Modifier.height(14.dp))
@@ -1055,7 +1053,8 @@ private fun InGameHudComposeOverlay(
                             onClick = onNextMission,
                             modifier = Modifier.fillMaxWidth(),
                             height = 46.dp,
-                            fontSize = 14.sp
+                            fontSize = 14.sp,
+                            iconSize = 14.dp,
                         )
                     } else {
                         SecondaryButton(

@@ -2,7 +2,7 @@ package cdev.wargame.ui.components
 
 import android.graphics.Paint as NativePaint
 import androidx.annotation.DrawableRes
-import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.EaseInOutSine
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -61,14 +61,15 @@ fun PrimaryGlowPillButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     height: Dp = 68.dp,
-    fontSize: TextUnit = 20.sp
+    fontSize: TextUnit = 26.sp,
+    iconSize: Dp = 26.dp,
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "pillPulse")
     val pulseFraction by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1000, easing = FastOutSlowInEasing),
+            animation = tween(durationMillis = 1000, easing = EaseInOutSine),
             repeatMode = RepeatMode.Reverse
         ),
         label = "pulseFraction"
@@ -121,7 +122,7 @@ fun PrimaryGlowPillButton(
                 painter = painterResource(iconRes),
                 contentDescription = null,
                 tint = WarGameColors.GoldDarkText,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(iconSize)
             )
             Spacer(modifier = Modifier.width(10.dp))
             Text(
@@ -344,7 +345,7 @@ fun PulsingRankBadge(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 900, easing = FastOutSlowInEasing),
+            animation = tween(durationMillis = 900, easing = EaseInOutSine),
             repeatMode = RepeatMode.Reverse
         ),
         label = "dotPulse"
