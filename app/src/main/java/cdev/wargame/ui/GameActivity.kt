@@ -2,17 +2,22 @@ package cdev.wargame.ui
 
 import android.os.Bundle
 import android.view.WindowManager
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import cdev.wargame.core.CampaignManager
+import cdev.wargame.ui.theme.WarGameTheme
 
 class GameActivity : AppCompatActivity() {
 
     private lateinit var gameSurfaceView: GameSurfaceView
     private lateinit var campaignManager: CampaignManager
-    private lateinit var uiController: MainUiController
+    private var uiTickTrigger by mutableIntStateOf(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,46 +34,42 @@ class GameActivity : AppCompatActivity() {
         gameSurfaceView.engine.onLevelCompleted = { levelIndex ->
             campaignManager.completeLevel(levelIndex)
             runOnUiThread {
-                if (::uiController.isInitialized) {
-                    uiController.refreshAllUi()
-                }
+                uiTickTrigger++
             }
         }
 
-        uiController = MainUiController(
-            context = this,
-            engine = gameSurfaceView.engine,
-            campaignManager = campaignManager,
-            gameSurfaceView = gameSurfaceView,
-            onNextMission = {
-                val nextLevel = if (campaignManager.currentLevel < campaignManager.maxCampaignLevels) {
-                    campaignManager.currentLevel + 1
-                } else {
-                    1
-                }
-                campaignManager.currentLevel = nextLevel
-                gameSurfaceView.engine.loadLevel(nextLevel, this, startPlaying = true)
-                uiController.refreshAllUi()
-            }
-        )
-
-        setContentView(uiController.rootLayout)
-
-        // Hide system bars AFTER setContentView so decorView is initialized
-        hideSystemBars()
-
         // Start at Main Menu
         gameSurfaceView.engine.loadLevel(campaignManager.currentLevel, this, startPlaying = false)
-        uiController.refreshAllUi()
+
+        setContent {
+            WarGameTheme {
+                WarGameRootScreen(
+                    engine = gameSurfaceView.engine,
+                    campaignManager = campaignManager,
+                    gameSurfaceView = gameSurfaceView,
+                    uiTickTrigger = uiTickTrigger,
+                    onNextMission = {
+                        val nextLevel = if (campaignManager.currentLevel < campaignManager.maxCampaignLevels) {
+                            campaignManager.currentLevel + 1
+                        } else {
+                            1
+                        }
+                        campaignManager.currentLevel = nextLevel
+                        gameSurfaceView.engine.loadLevel(nextLevel, this, startPlaying = true)
+                        uiTickTrigger++
+                    }
+                )
+            }
+        }
+
+        hideSystemBars()
     }
 
     override fun onResume() {
         super.onResume()
         hideSystemBars()
         gameSurfaceView.startLoop()
-        if (::uiController.isInitialized) {
-            uiController.refreshAllUi()
-        }
+        uiTickTrigger++
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {

@@ -20,8 +20,8 @@ object GameConfig {
 
     // Steering behavior weights
     const val SEEK_WEIGHT = 5.0f
-    const val SEPARATION_WEIGHT = 2.5f
-    const val SEPARATION_RADIUS = 1.15f * UNIT_RADIUS
+    const val SEPARATION_WEIGHT = 10.0f
+    const val SEPARATION_RADIUS = 3.5f * UNIT_RADIUS
     const val BOUNDARY_MARGIN = 0.08f
     const val BOUNDARY_FORCE = 3.0f
     const val BASE_AVOIDANCE_RADIUS = 0.25f
