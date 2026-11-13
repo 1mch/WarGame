@@ -1,11 +1,15 @@
 package cdev.wargame.ui
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapShader
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.ComposeShader
 import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.PorterDuff
 import android.graphics.RadialGradient
 import android.graphics.Shader
 import android.util.AttributeSet
@@ -58,11 +62,18 @@ class LivingBackgroundRenderer {
     private var cachedWidth = 0
     private var cachedHeight = 0
 
-    private val bgPaint = Paint().apply {
+    private val bgPaint = Paint(Paint.DITHER_FLAG).apply {
         color = Color.parseColor("#101010")
         style = Paint.Style.FILL
+        isDither = true
     }
-    private val gradPaint = Paint()
+    private val gradPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG).apply {
+        isDither = true
+        isFilterBitmap = true
+    }
+    private val ditherNoiseShader: BitmapShader by lazy {
+        createDitherNoiseShader()
+    }
     private val particlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
     }
@@ -87,10 +98,10 @@ class LivingBackgroundRenderer {
         particles.clear()
         val s = w / 350f
 
-        // Centrálny ambientný radiálny gradient (iba žltá + biela + alpha do čiernej)
+        // Centrálny ambientný radiálny gradient s ditheringom proti pruhovaniu (banding)
         val wf = w.toFloat()
         val hf = h.toFloat()
-        gradPaint.shader = RadialGradient(
+        val radial = RadialGradient(
             wf / 2f,
             hf * 0.65f,
             max(wf, hf) * 0.7f,
@@ -102,6 +113,7 @@ class LivingBackgroundRenderer {
             floatArrayOf(0f, 0.5f, 1f),
             Shader.TileMode.CLAMP
         )
+        gradPaint.shader = ComposeShader(radial, ditherNoiseShader, PorterDuff.Mode.ADD)
 
         // 35 autonómnych svetelných častíc (iba žltá alebo biela + alpha)
         repeat(35) {
@@ -263,5 +275,22 @@ class LivingBackgroundRenderer {
         canvas.rotate(angleDegrees % 360f)
         block()
         canvas.restore()
+    }
+
+    /**
+     * Vytvorí opakovateľnú 64x64 dither textúru s jemným šumom (alpha 0..3),
+     * ktorá v kombinácii s Paint.DITHER_FLAG rozbije farebné pruhovanie (color banding)
+     * tmavého radiálneho gradientu na 8-bitových/OLED displejoch.
+     */
+    private fun createDitherNoiseShader(): BitmapShader {
+        val size = 64
+        val pixels = IntArray(size * size)
+        val rng = Random(42)
+        for (i in pixels.indices) {
+            val a = rng.nextInt(4) // 0..3 alpha jemný sub-bit dither
+            pixels[i] = Color.argb(a, 255, 255, 255)
+        }
+        val bitmap = Bitmap.createBitmap(pixels, size, size, Bitmap.Config.ARGB_8888)
+        return BitmapShader(bitmap, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT)
     }
 }
