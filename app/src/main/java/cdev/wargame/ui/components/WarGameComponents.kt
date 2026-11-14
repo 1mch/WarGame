@@ -19,12 +19,19 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -42,12 +49,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import cdev.wargame.R
 import cdev.wargame.ui.theme.WarGameColors
 
@@ -455,4 +468,50 @@ fun BottomNavBar(
         }
     }
 }
+
+data class SafeNotchInsets(
+    val top: Dp,
+    val bottom: Dp,
+    val start: Dp,
+    val end: Dp
+)
+
+/**
+ * Calculates safe insets that account for the camera notch / displayCutout and status bar
+ * even when systemBars are hidden in immersive mode.
+ */
+@Composable
+fun rememberSafeNotchInsets(minTop: Dp = 14.dp): SafeNotchInsets {
+    val view = LocalView.current
+    val density = LocalDensity.current
+    val layoutDirection = LocalLayoutDirection.current
+
+    val composePadding = WindowInsets.safeDrawing
+        .union(WindowInsets.displayCutout)
+        .asPaddingValues()
+
+    val rootInsets = ViewCompat.getRootWindowInsets(view)
+    val cutoutAndStatus = rootInsets?.getInsetsIgnoringVisibility(
+        WindowInsetsCompat.Type.displayCutout() or WindowInsetsCompat.Type.statusBars()
+    )
+    val cutoutOnly = rootInsets?.getInsetsIgnoringVisibility(
+        WindowInsetsCompat.Type.displayCutout()
+    )
+
+    val nativeTopDp = with(density) { (cutoutAndStatus?.top ?: 0).toDp() }
+    val nativeBottomDp = with(density) { (cutoutOnly?.bottom ?: 0).toDp() }
+    val nativeLeftDp = with(density) { (cutoutAndStatus?.left ?: 0).toDp() }
+    val nativeRightDp = with(density) { (cutoutAndStatus?.right ?: 0).toDp() }
+
+    val nativeStartDp = if (layoutDirection == LayoutDirection.Ltr) nativeLeftDp else nativeRightDp
+    val nativeEndDp = if (layoutDirection == LayoutDirection.Ltr) nativeRightDp else nativeLeftDp
+
+    return SafeNotchInsets(
+        top = maxOf(composePadding.calculateTopPadding(), nativeTopDp, minTop),
+        bottom = maxOf(composePadding.calculateBottomPadding(), nativeBottomDp),
+        start = maxOf(composePadding.calculateStartPadding(layoutDirection), nativeStartDp),
+        end = maxOf(composePadding.calculateEndPadding(layoutDirection), nativeEndDp)
+    )
+}
+
 
