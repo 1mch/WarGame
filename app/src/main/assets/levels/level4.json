@@ -1,0 +1,21 @@
+{
+  "name": "Mission 4: Quad Siege",
+  "bases": [
+    { "id": "b1",  "x": -120.0, "y": 240.0,  "ownerId": 1, "initialUnits": 30, "type": "large" },
+    { "id": "b2",  "x": 120.0,  "y": 240.0,  "ownerId": 2, "initialUnits": 24, "type": "large" },
+    { "id": "b3",  "x": -120.0, "y": -230.0, "ownerId": 3, "initialUnits": 24, "type": "large" },
+    { "id": "b4",  "x": 120.0,  "y": -230.0, "ownerId": 4, "initialUnits": 24, "type": "large" },
+    { "id": "b5",  "x": 0.0,    "y": 0.0,    "ownerId": 0, "initialUnits": 28, "type": "large" },
+    { "id": "b6",  "x": 0.0,    "y": 150.0,  "ownerId": 0, "initialUnits": 10, "type": "medium" },
+    { "id": "b7",  "x": 0.0,    "y": -150.0, "ownerId": 0, "initialUnits": 10, "type": "medium" },
+    { "id": "b8",  "x": -115.0, "y": 0.0,    "ownerId": 0, "initialUnits": 9,  "type": "small" },
+    { "id": "b9",  "x": 115.0,  "y": 0.0,    "ownerId": 0, "initialUnits": 9,  "type": "small" }
+  ],
+  "obstacles": [
+    { "id": "obs1", "x": -58.0, "y": 85.0,  "radius": 13.5, "type": "rock" },
+    { "id": "obs2", "x": 58.0,  "y": 85.0,  "radius": 13.5, "type": "rock" },
+    { "id": "obs3", "x": -58.0, "y": -85.0, "radius": 13.5, "type": "rock" },
+    { "id": "obs4", "x": 58.0,  "y": -85.0, "radius": 13.5, "type": "rock" }
+  ]
+}
+

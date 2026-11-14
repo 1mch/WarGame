@@ -87,7 +87,7 @@ class CanvasRenderer {
         width = w
         height = h
         isPortrait = width < height
-        s = min(width, height) / GameConfig.LOGICAL_WIDTH
+        s = min(width / GameConfig.LOGICAL_WIDTH, height / GameConfig.LOGICAL_HEIGHT)
         scale = s
         centerX = width / 2.0f
         centerY = height / 2.0f

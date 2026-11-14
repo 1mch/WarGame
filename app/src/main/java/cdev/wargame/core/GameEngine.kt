@@ -77,7 +77,7 @@ class GameEngine(
         }
     }
 
-    fun loadLevel(levelIndex: Int, context: Context?, startPlaying: Boolean = true) {
+    fun loadLevel(levelIndex: Int, context: Context, startPlaying: Boolean = true) {
         val levelData: LevelData = LevelLoader.loadLevel(context, levelIndex)
 
         synchronized(stateLock) {
@@ -132,11 +132,11 @@ class GameEngine(
         }
     }
 
-    fun restartLevel(context: Context?) {
+    fun restartLevel(context: Context) {
         loadLevel(currentLevelIndex, context, startPlaying = true)
     }
 
-    fun startCampaign(context: Context?) {
+    fun startCampaign(context: Context) {
         val targetLvl = campaignManager?.currentLevel ?: 1
         loadLevel(targetLvl, context, startPlaying = true)
     }

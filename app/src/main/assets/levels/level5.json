@@ -1,0 +1,21 @@
+{
+  "name": "Mission 5: Total Dominion",
+  "bases": [
+    { "id": "b1",  "x": 0.0,    "y": 245.0,  "ownerId": 1, "initialUnits": 36, "type": "large" },
+    { "id": "b2",  "x": -125.0, "y": -230.0, "ownerId": 2, "initialUnits": 26, "type": "large" },
+    { "id": "b3",  "x": 125.0,  "y": -230.0, "ownerId": 5, "initialUnits": 26, "type": "large" },
+    { "id": "b4",  "x": -128.0, "y": -30.0,  "ownerId": 3, "initialUnits": 22, "type": "medium" },
+    { "id": "b5",  "x": 128.0,  "y": -30.0,  "ownerId": 4, "initialUnits": 22, "type": "medium" },
+    { "id": "b6",  "x": 0.0,    "y": 0.0,    "ownerId": 0, "initialUnits": 35, "type": "large" },
+    { "id": "b7",  "x": -85.0,  "y": 135.0,  "ownerId": 0, "initialUnits": 10, "type": "small" },
+    { "id": "b8",  "x": 85.0,   "y": 135.0,  "ownerId": 0, "initialUnits": 10, "type": "small" },
+    { "id": "b9",  "x": 0.0,    "y": -145.0, "ownerId": 0, "initialUnits": 14, "type": "medium" },
+    { "id": "b10", "x": 0.0,    "y": 110.0,  "ownerId": 0, "initialUnits": 12, "type": "medium" }
+  ],
+  "obstacles": [
+    { "id": "obs1", "x": 0.0,   "y": 58.0,  "radius": 14.5, "type": "rock" },
+    { "id": "obs2", "x": -65.0, "y": -75.0, "radius": 13.5, "type": "rock" },
+    { "id": "obs3", "x": 65.0,  "y": -75.0, "radius": 13.5, "type": "rock" }
+  ]
+}
+

@@ -1,14 +1,16 @@
 {
-  "name": "Level 1: Outpost Assault",
+  "name": "Mission 1: First Clash",
   "bases": [
-    { "id": "b1", "x": -115, "y": 90, "ownerId": 1, "initialUnits": 20, "type": "large" },
-    { "id": "b2", "x": 115, "y": -90, "ownerId": 2, "initialUnits": 18, "type": "large" },
-    { "id": "b3", "x": 0, "y": 0, "ownerId": 0, "initialUnits": 10, "type": "medium" },
-    { "id": "b4", "x": -70, "y": -55, "ownerId": 0, "initialUnits": 5, "type": "small" },
-    { "id": "b5", "x": 70, "y": 55, "ownerId": 0, "initialUnits": 5, "type": "small" }
+    { "id": "b1", "x": 0.0,   "y": 235.0,  "ownerId": 1, "initialUnits": 22, "type": "large" },
+    { "id": "b2", "x": 0.0,   "y": -230.0, "ownerId": 2, "initialUnits": 20, "type": "large" },
+    { "id": "b3", "x": 0.0,   "y": 0.0,    "ownerId": 0, "initialUnits": 12, "type": "medium" },
+    { "id": "b4", "x": -105.0,"y": 100.0,  "ownerId": 0, "initialUnits": 6,  "type": "small" },
+    { "id": "b5", "x": 105.0, "y": 100.0,  "ownerId": 0, "initialUnits": 6,  "type": "small" },
+    { "id": "b6", "x": -105.0,"y": -100.0, "ownerId": 0, "initialUnits": 6,  "type": "small" },
+    { "id": "b7", "x": 105.0, "y": -100.0, "ownerId": 0, "initialUnits": 6,  "type": "small" }
   ],
   "obstacles": [
-    { "id": "obs1", "x": -35, "y": 60, "radius": 12, "type": "rock" },
-    { "id": "obs2", "x": 35, "y": -60, "radius": 12, "type": "rock" }
+    { "id": "obs1", "x": -52.0, "y": 55.0,  "radius": 14.0, "type": "rock" },
+    { "id": "obs2", "x": 52.0,  "y": -55.0, "radius": 14.0, "type": "rock" }
   ]
 }
