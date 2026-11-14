@@ -1,0 +1,19 @@
+{
+  "name": "Binary Star",
+  "bases": [
+    { "id": "b1", "x": -110.0, "y": 240.0,  "ownerId": 1, "initialUnits": 28, "type": "large" },
+    { "id": "b2", "x": 110.0,  "y": -230.0, "ownerId": 2, "initialUnits": 26, "type": "large" },
+    { "id": "b3", "x": -110.0, "y": -230.0, "ownerId": 3, "initialUnits": 22, "type": "medium" },
+    { "id": "b4", "x": -55.0,  "y": 0.0,    "ownerId": 0, "initialUnits": 18, "type": "large" },
+    { "id": "b5", "x": 55.0,   "y": 0.0,    "ownerId": 0, "initialUnits": 18, "type": "large" },
+    { "id": "b6", "x": 110.0,  "y": 240.0,  "ownerId": 0, "initialUnits": 10, "type": "medium" },
+    { "id": "b7", "x": 0.0,    "y": 135.0,  "ownerId": 0, "initialUnits": 8,  "type": "small" },
+    { "id": "b8", "x": 0.0,    "y": -135.0, "ownerId": 0, "initialUnits": 8,  "type": "small" }
+  ],
+  "obstacles": [
+    { "id": "obs1", "x": 0.0,    "y": 0.0,   "radius": 15.0, "type": "rock" },
+    { "id": "obs2", "x": -115.0, "y": 75.0,  "radius": 13.0, "type": "rock" },
+    { "id": "obs3", "x": 115.0,  "y": -75.0, "radius": 13.0, "type": "rock" }
+  ]
+}
+

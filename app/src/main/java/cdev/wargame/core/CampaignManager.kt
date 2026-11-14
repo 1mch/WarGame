@@ -88,7 +88,7 @@ class CampaignManager(context: Context) {
         get() = prefs.getInt("selected_skin", 0)
         set(value) = prefs.edit().putInt("selected_skin", value).apply()
 
-    val maxCampaignLevels: Int = 5
+    val maxCampaignLevels: Int = 10
 
     fun completeLevel(levelIndex: Int) {
         winsCount++

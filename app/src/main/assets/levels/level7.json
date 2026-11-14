@@ -1,0 +1,21 @@
+{
+  "name": "Crossfire",
+  "bases": [
+    { "id": "b1", "x": 0.0,    "y": 245.0,  "ownerId": 1, "initialUnits": 30, "type": "large" },
+    { "id": "b2", "x": 0.0,    "y": -235.0, "ownerId": 2, "initialUnits": 26, "type": "large" },
+    { "id": "b3", "x": -130.0, "y": 0.0,    "ownerId": 3, "initialUnits": 22, "type": "medium" },
+    { "id": "b4", "x": 130.0,  "y": 0.0,    "ownerId": 4, "initialUnits": 22, "type": "medium" },
+    { "id": "b5", "x": -75.0,  "y": 130.0,  "ownerId": 0, "initialUnits": 10, "type": "medium" },
+    { "id": "b6", "x": 75.0,   "y": 130.0,  "ownerId": 0, "initialUnits": 10, "type": "medium" },
+    { "id": "b7", "x": -75.0,  "y": -130.0, "ownerId": 0, "initialUnits": 10, "type": "medium" },
+    { "id": "b8", "x": 75.0,   "y": -130.0, "ownerId": 0, "initialUnits": 10, "type": "medium" },
+    { "id": "b9", "x": 0.0,    "y": 0.0,    "ownerId": 0, "initialUnits": 25, "type": "large" }
+  ],
+  "obstacles": [
+    { "id": "obs1", "x": 0.0,   "y": 80.0,  "radius": 13.5, "type": "rock" },
+    { "id": "obs2", "x": 0.0,   "y": -80.0, "radius": 13.5, "type": "rock" },
+    { "id": "obs3", "x": -65.0, "y": 0.0,   "radius": 13.5, "type": "rock" },
+    { "id": "obs4", "x": 65.0,  "y": 0.0,   "radius": 13.5, "type": "rock" }
+  ]
+}
+

@@ -1,5 +1,5 @@
 {
-  "name": "Mission 5: Total Dominion",
+  "name": "Total Dominion",
   "bases": [
     { "id": "b1",  "x": 0.0,    "y": 245.0,  "ownerId": 1, "initialUnits": 36, "type": "large" },
     { "id": "b2",  "x": -125.0, "y": -230.0, "ownerId": 2, "initialUnits": 26, "type": "large" },

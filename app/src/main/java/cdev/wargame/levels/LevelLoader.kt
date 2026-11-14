@@ -1,9 +1,22 @@
 package cdev.wargame.levels
 
 import android.content.Context
+import kotlin.random.Random
 import org.json.JSONObject
 
 object LevelLoader {
+
+    const val TOTAL_LEVELS = 10
+
+    /**
+     * Picks a random level index in 1..TOTAL_LEVELS, avoiding [excludeIndex] so the same map
+     * is not picked twice in a row.
+     */
+    fun pickRandomLevelIndex(excludeIndex: Int? = null): Int {
+        if (TOTAL_LEVELS <= 1) return 1
+        val candidates = (1..TOTAL_LEVELS).filter { it != excludeIndex }
+        return candidates[Random.nextInt(candidates.size)]
+    }
 
     /**
      * Loads a level exclusively from JSON assets (`assets/levels/level<levelIndex>.json`).
@@ -13,16 +26,19 @@ object LevelLoader {
      *   Y axis = -300 (top)  .. +300 (bottom)
      */
     fun loadLevel(context: Context, levelIndex: Int): LevelData {
-        val fileName = "levels/level$levelIndex.json"
+        val safeIndex = levelIndex.coerceIn(1, TOTAL_LEVELS)
+        val fileName = "levels/level$safeIndex.json"
         context.assets.open(fileName).use { stream ->
             val jsonStr = stream.bufferedReader().use { it.readText() }
-            return parseJson(jsonStr, "Mission $levelIndex")
+            return parseJson(jsonStr)
         }
     }
 
     fun parseJson(jsonStr: String, defaultName: String = "Operation"): LevelData {
         val root = JSONObject(jsonStr)
-        val name = root.optString("name", defaultName)
+        val rawName = root.optString("name", defaultName)
+        // Strip any "Mission X:" prefix if present
+        val cleanName = rawName.replace(Regex("^Mission\\s+\\d+\\s*:\\s*", RegexOption.IGNORE_CASE), "").trim()
 
         val basesList = mutableListOf<BaseDef>()
         val basesArray = root.optJSONArray("bases")
@@ -59,6 +75,6 @@ object LevelLoader {
             }
         }
 
-        return LevelData(name, basesList, obsList)
+        return LevelData(cleanName, basesList, obsList)
     }
 }

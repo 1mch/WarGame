@@ -136,9 +136,15 @@ class GameEngine(
         loadLevel(currentLevelIndex, context, startPlaying = true)
     }
 
+    fun loadRandomLevel(context: Context, startPlaying: Boolean = true): Int {
+        val randomLvl = LevelLoader.pickRandomLevelIndex(excludeIndex = currentLevelIndex)
+        campaignManager?.currentLevel = randomLvl
+        loadLevel(randomLvl, context, startPlaying = startPlaying)
+        return randomLvl
+    }
+
     fun startCampaign(context: Context) {
-        val targetLvl = campaignManager?.currentLevel ?: 1
-        loadLevel(targetLvl, context, startPlaying = true)
+        loadRandomLevel(context, startPlaying = true)
     }
 
     fun update(dtMs: Float) {

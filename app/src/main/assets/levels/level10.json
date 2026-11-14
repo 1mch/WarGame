@@ -1,0 +1,23 @@
+{
+  "name": "Galactic Maelstrom",
+  "bases": [
+    { "id": "b1",  "x": 0.0,    "y": 245.0,  "ownerId": 1, "initialUnits": 38, "type": "large" },
+    { "id": "b2",  "x": -125.0, "y": 140.0,  "ownerId": 2, "initialUnits": 22, "type": "medium" },
+    { "id": "b3",  "x": 125.0,  "y": 140.0,  "ownerId": 3, "initialUnits": 22, "type": "medium" },
+    { "id": "b4",  "x": -125.0, "y": -140.0, "ownerId": 4, "initialUnits": 24, "type": "medium" },
+    { "id": "b5",  "x": 125.0,  "y": -140.0, "ownerId": 5, "initialUnits": 24, "type": "medium" },
+    { "id": "b6",  "x": 0.0,    "y": -235.0, "ownerId": 6, "initialUnits": 28, "type": "large" },
+    { "id": "b7",  "x": 0.0,    "y": 0.0,    "ownerId": 0, "initialUnits": 35, "type": "large" },
+    { "id": "b8",  "x": -65.0,  "y": 65.0,   "ownerId": 0, "initialUnits": 10, "type": "small" },
+    { "id": "b9",  "x": 65.0,   "y": 65.0,   "ownerId": 0, "initialUnits": 10, "type": "small" },
+    { "id": "b10", "x": -65.0,  "y": -65.0,  "ownerId": 0, "initialUnits": 10, "type": "small" },
+    { "id": "b11", "x": 65.0,   "y": -65.0,  "ownerId": 0, "initialUnits": 10, "type": "small" }
+  ],
+  "obstacles": [
+    { "id": "obs1", "x": 0.0,   "y": 115.0,  "radius": 14.0, "type": "rock" },
+    { "id": "obs2", "x": 0.0,   "y": -115.0, "radius": 14.0, "type": "rock" },
+    { "id": "obs3", "x": -95.0, "y": 0.0,    "radius": 13.5, "type": "rock" },
+    { "id": "obs4", "x": 95.0,  "y": 0.0,    "radius": 13.5, "type": "rock" }
+  ]
+}
+

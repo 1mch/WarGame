@@ -1,5 +1,5 @@
 {
-  "name": "Mission 4: Quad Siege",
+  "name": "Quad Siege",
   "bases": [
     { "id": "b1",  "x": -120.0, "y": 240.0,  "ownerId": 1, "initialUnits": 30, "type": "large" },
     { "id": "b2",  "x": 120.0,  "y": 240.0,  "ownerId": 2, "initialUnits": 24, "type": "large" },

@@ -32,6 +32,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -46,6 +47,7 @@ import cdev.wargame.R
 import cdev.wargame.core.CampaignManager
 import cdev.wargame.core.GameEngine
 import cdev.wargame.core.ScreenState
+import cdev.wargame.levels.LevelLoader
 import cdev.wargame.ui.components.BottomNavBar
 import cdev.wargame.ui.components.CurrencyPill
 import cdev.wargame.ui.components.IconCircleButton
@@ -605,20 +607,18 @@ private fun LevelSelectSection(
     onSelectLevel: (Int) -> Unit,
     onBackToMenu: () -> Unit
 ) {
-    val hostView = LocalView.current
-    val unlocked = campaignManager.unlockedLevel
-    val titles = listOf(
-        res.getString(R.string.sector_1_title),
-        res.getString(R.string.sector_2_title),
-        res.getString(R.string.sector_3_title),
-        res.getString(R.string.sector_4_title),
-        res.getString(R.string.sector_5_title)
-    )
+    val context = LocalContext.current
+    val titles = remember(context) {
+        (1..LevelLoader.TOTAL_LEVELS).map { idx ->
+            LevelLoader.loadLevel(context, idx).name
+        }
+    }
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp),
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -629,30 +629,20 @@ private fun LevelSelectSection(
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        for (i in 0 until 5) {
-            val isUnlocked = (i + 1) <= unlocked
+        for (i in titles.indices) {
             val isCurrent = (i + 1) == engine.currentLevelIndex
 
             WarGameCard(
                 modifier = Modifier
                     .width(320.dp)
                     .padding(bottom = 8.dp),
-                backgroundColor = if (isUnlocked) WarGameColors.CardBg else Color(0xFF0C0C0C),
-                borderColor = when {
-                    isCurrent -> WarGameColors.Gold
-                    isUnlocked -> WarGameColors.ButtonSecondaryBorder
-                    else -> Color(0xFF1A1A1A)
-                },
+                backgroundColor = WarGameColors.CardBg,
+                borderColor = if (isCurrent) WarGameColors.Gold else WarGameColors.ButtonSecondaryBorder,
                 borderWidth = if (isCurrent) 1.8.dp else 1.dp,
                 cornerRadius = 8.dp,
                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
                 onClick = {
-                    if (isUnlocked) {
-                        onSelectLevel(i + 1)
-                    } else {
-                        hostView.performHapticFeedback(HapticFeedbackConstants.REJECT)
-                        engine.soundManager.playBaseHit()
-                    }
+                    onSelectLevel(i + 1)
                 }
             ) {
                 Row(
@@ -662,21 +652,20 @@ private fun LevelSelectSection(
                 ) {
                     Text(
                         text = titles[i],
-                        color = if (isUnlocked) Color.White else WarGameColors.TextSubtle,
+                        color = Color.White,
                         fontSize = 12.5.sp
                     )
-                    val statusColor = if (isUnlocked) WarGameColors.Green else WarGameColors.TextMuted
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = res.getString(if (isUnlocked) R.string.sector_deploy else R.string.sector_locked),
-                            color = statusColor,
+                            text = res.getString(R.string.sector_deploy),
+                            color = WarGameColors.Green,
                             fontSize = 11.sp
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Icon(
-                            painter = painterResource(if (isUnlocked) R.drawable.ic_play else R.drawable.ic_lock),
+                            painter = painterResource(R.drawable.ic_play),
                             contentDescription = null,
-                            tint = statusColor,
+                            tint = WarGameColors.Green,
                             modifier = Modifier.size(12.dp)
                         )
                     }

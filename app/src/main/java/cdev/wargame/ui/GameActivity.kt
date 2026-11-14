@@ -39,8 +39,8 @@ class GameActivity : AppCompatActivity() {
             }
         }
 
-        // Start at Main Menu
-        gameSurfaceView.engine.loadLevel(campaignManager.currentLevel, this, startPlaying = false)
+        // Start at Main Menu with a random level loaded in the background
+        gameSurfaceView.engine.loadRandomLevel(this, startPlaying = false)
 
         setContent {
             WarGameTheme {
@@ -50,13 +50,7 @@ class GameActivity : AppCompatActivity() {
                     gameSurfaceView = gameSurfaceView,
                     uiTickTrigger = uiTickTrigger,
                     onNextMission = {
-                        val nextLevel = if (campaignManager.currentLevel < campaignManager.maxCampaignLevels) {
-                            campaignManager.currentLevel + 1
-                        } else {
-                            1
-                        }
-                        campaignManager.currentLevel = nextLevel
-                        gameSurfaceView.engine.loadLevel(nextLevel, this, startPlaying = true)
+                        gameSurfaceView.engine.loadRandomLevel(this, startPlaying = true)
                         uiTickTrigger++
                     }
                 )

@@ -1,0 +1,19 @@
+{
+  "name": "Iron Curtain",
+  "bases": [
+    { "id": "b1", "x": -80.0,  "y": 240.0,  "ownerId": 1, "initialUnits": 24, "type": "large" },
+    { "id": "b2", "x": 80.0,   "y": 240.0,  "ownerId": 1, "initialUnits": 16, "type": "medium" },
+    { "id": "b3", "x": -80.0,  "y": -230.0, "ownerId": 2, "initialUnits": 24, "type": "large" },
+    { "id": "b4", "x": 80.0,   "y": -230.0, "ownerId": 3, "initialUnits": 24, "type": "large" },
+    { "id": "b5", "x": -125.0, "y": 0.0,    "ownerId": 0, "initialUnits": 14, "type": "large" },
+    { "id": "b6", "x": 125.0,  "y": 0.0,    "ownerId": 0, "initialUnits": 14, "type": "large" },
+    { "id": "b7", "x": 0.0,    "y": 115.0,  "ownerId": 0, "initialUnits": 8,  "type": "small" },
+    { "id": "b8", "x": 0.0,    "y": -115.0, "ownerId": 0, "initialUnits": 8,  "type": "small" }
+  ],
+  "obstacles": [
+    { "id": "obs1", "x": -55.0, "y": 0.0, "radius": 16.0, "type": "rock" },
+    { "id": "obs2", "x": 0.0,   "y": 0.0, "radius": 17.0, "type": "rock" },
+    { "id": "obs3", "x": 55.0,  "y": 0.0, "radius": 16.0, "type": "rock" }
+  ]
+}
+

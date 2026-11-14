@@ -1,5 +1,5 @@
 {
-  "name": "Mission 1: First Clash",
+  "name": "First Clash",
   "bases": [
     { "id": "b1", "x": 0.0,   "y": 235.0,  "ownerId": 1, "initialUnits": 22, "type": "large" },
     { "id": "b2", "x": 0.0,   "y": -230.0, "ownerId": 2, "initialUnits": 20, "type": "large" },
