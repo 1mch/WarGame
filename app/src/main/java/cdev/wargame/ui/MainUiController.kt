@@ -17,12 +17,17 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -47,6 +52,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -55,9 +62,12 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import cdev.wargame.R
 import cdev.wargame.core.CampaignManager
 import cdev.wargame.core.GameConfig
@@ -235,15 +245,19 @@ private fun MainMenuComposeOverlay(
     onSelectLevel: (Int) -> Unit,
     onStateMutated: () -> Unit
 ) {
-    val sysBarsPadding = WindowInsets.systemBars.asPaddingValues()
-    val safeTop = maxOf(sysBarsPadding.calculateTopPadding(), 24.dp)
+    val notchInsets = rememberSafeNotchInsets(minTop = 24.dp)
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Middle Content Zone
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = safeTop + 54.dp, bottom = 84.dp),
+                .padding(
+                    top = notchInsets.top + 54.dp,
+                    bottom = 84.dp + notchInsets.bottom,
+                    start = notchInsets.start,
+                    end = notchInsets.end
+                ),
             contentAlignment = Alignment.Center
         ) {
             if (screenState == ScreenState.LEVEL_SELECT) {
@@ -287,7 +301,12 @@ private fun MainMenuComposeOverlay(
                         colors = listOf(Color.Black.copy(alpha = 0.95f), Color.Transparent)
                     )
                 )
-                .padding(top = safeTop + 8.dp, bottom = 12.dp, start = 16.dp, end = 16.dp)
+                .padding(
+                    top = notchInsets.top + 8.dp,
+                    bottom = 12.dp,
+                    start = notchInsets.start + 16.dp,
+                    end = notchInsets.end + 16.dp
+                )
                 .align(Alignment.TopCenter),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
@@ -962,15 +981,18 @@ private fun InGameHudComposeOverlay(
     onTogglePause: () -> Unit,
     onNextMission: () -> Unit
 ) {
-    val sysBarsPadding = WindowInsets.systemBars.asPaddingValues()
-    val safeTop = maxOf(sysBarsPadding.calculateTopPadding(), 12.dp)
+    val notchInsets = rememberSafeNotchInsets(minTop = 14.dp)
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Top HUD Bar
+        // Top HUD Bar (respects notch / displayCutout + hidden statusBars height)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = safeTop + 4.dp, start = 14.dp, end = 14.dp)
+                .padding(
+                    top = notchInsets.top + 6.dp,
+                    start = notchInsets.start + 14.dp,
+                    end = notchInsets.end + 14.dp
+                )
                 .align(Alignment.TopCenter),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -1119,6 +1141,51 @@ private fun FactionPowerBar(
             }
         }
     }
+}
+
+private data class SafeNotchInsets(
+    val top: Dp,
+    val bottom: Dp,
+    val start: Dp,
+    val end: Dp
+)
+
+/**
+ * Calculates safe insets that account for the camera notch / displayCutout and status bar
+ * even when systemBars are hidden in immersive mode.
+ */
+@Composable
+private fun rememberSafeNotchInsets(minTop: Dp = 14.dp): SafeNotchInsets {
+    val view = LocalView.current
+    val density = LocalDensity.current
+    val layoutDirection = LocalLayoutDirection.current
+
+    val composePadding = WindowInsets.safeDrawing
+        .union(WindowInsets.displayCutout)
+        .asPaddingValues()
+
+    val rootInsets = ViewCompat.getRootWindowInsets(view)
+    val cutoutAndStatus = rootInsets?.getInsetsIgnoringVisibility(
+        WindowInsetsCompat.Type.displayCutout() or WindowInsetsCompat.Type.statusBars()
+    )
+    val navIgnoring = rootInsets?.getInsetsIgnoringVisibility(
+        WindowInsetsCompat.Type.displayCutout()
+    )
+
+    val nativeTopDp = with(density) { (cutoutAndStatus?.top ?: 0).toDp() }
+    val nativeBottomDp = with(density) { (navIgnoring?.bottom ?: 0).toDp() }
+    val nativeLeftDp = with(density) { (cutoutAndStatus?.left ?: 0).toDp() }
+    val nativeRightDp = with(density) { (cutoutAndStatus?.right ?: 0).toDp() }
+
+    val nativeStartDp = if (layoutDirection == androidx.compose.ui.unit.LayoutDirection.Ltr) nativeLeftDp else nativeRightDp
+    val nativeEndDp = if (layoutDirection == androidx.compose.ui.unit.LayoutDirection.Ltr) nativeRightDp else nativeLeftDp
+
+    return SafeNotchInsets(
+        top = maxOf(composePadding.calculateTopPadding(), nativeTopDp, minTop),
+        bottom = maxOf(composePadding.calculateBottomPadding(), nativeBottomDp),
+        start = maxOf(composePadding.calculateStartPadding(layoutDirection), nativeStartDp),
+        end = maxOf(composePadding.calculateEndPadding(layoutDirection), nativeEndDp)
+    )
 }
 
 private fun localizedResources(context: Context, language: String): Resources {
