@@ -96,6 +96,10 @@ class Base(
         }
     }
 
+    fun resetRegenTimer() {
+        regenTimer = 0f
+    }
+
     fun sendUnitsTo(target: Base, ratio: Float = 1.0f) {
         if (unitCount <= 0 || target === this) return
         val amount = (unitCount * ratio).toInt().coerceAtLeast(1)

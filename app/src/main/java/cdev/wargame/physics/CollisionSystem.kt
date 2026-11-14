@@ -71,14 +71,17 @@ class CollisionSystem(
                     soundManager.playBaseReinforce()
                     particleSystem.spawnBaseHit(unit.position, GameConfig.getFaction(target.ownerId).glowColor)
                 } else {
-                    // Attacking foreign / neutral base
+                    // Attacking foreign / neutral base:
+                    // Garrison goes all the way down to 0 first;
+                    // the base is captured only when another attacking unit enters it at 0.
                     target.unitCount--
-                    if (target.unitCount <= 0) {
+                    if (target.unitCount < 0) {
                         val prevOwner = target.ownerId
                         target.ownerId = unit.ownerId
                         target.unitCount = 1
                         target.targetBase = null
                         target.sendingUnitsCount = 0
+                        target.resetRegenTimer()
 
                         val newFaction = GameConfig.getFaction(target.ownerId)
                         particleSystem.spawnCaptureRipple(target.position, newFaction.primaryColor, target.radius)

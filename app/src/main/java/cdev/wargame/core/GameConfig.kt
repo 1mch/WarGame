@@ -14,8 +14,6 @@ object GameConfig {
     // Logical coordinate space: width = 350 (-175 .. +175), height = 600 (-300 .. +300), center = (0, 0)
     const val LOGICAL_WIDTH = 350f
     const val LOGICAL_HALF_WIDTH = 175f
-    const val LOGICAL_HEIGHT = 600f
-    const val LOGICAL_HALF_HEIGHT = 300f
 
     // Unit properties (in logical points where 350 = screen width)
     const val UNIT_RADIUS = 3.5f
